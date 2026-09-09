@@ -31,7 +31,9 @@ import type {
   PcbTrace,
   PcbVia,
 } from "circuit-json"
+import { convertAltiumCopperAreas } from "./pcb/convert-altium-copper-areas"
 import { getPreferredPcbBoardOutline } from "./pcb/get-board-outline"
+import { mapAltiumCopperLayer } from "./pcb/map-altium-copper-layer"
 import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
 
 const MILS_TO_MILLIMETERS = 0.0254
@@ -41,6 +43,7 @@ const BOARD_GRAPHICS_COMPONENT_ID = "pcb_component_altium_board_graphics"
 export interface ConvertAltiumPcbDocOptions {
   includeBoardOutline?: boolean
   includeComponents?: boolean
+  includeCopperAreas?: boolean
   includeCourtyards?: boolean
   includePads?: boolean
   includeSilkscreen?: boolean
@@ -97,6 +100,10 @@ export function convertAltiumPcbDocToCircuitJson(
     options.includeComponents !== false
   ) {
     elements.push(...convertCourtyards(document))
+  }
+
+  if (options.includeCopperAreas !== false) {
+    elements.push(...convertAltiumCopperAreas(document))
   }
 
   for (const [index, record] of document.records.entries()) {
@@ -300,7 +307,7 @@ function createBoard(document: AltiumPcbDocument): PcbBoard {
   const numLayers = document.board
     ? Math.max(
         getPcbLayerStack(document.board).entries.filter((entry) =>
-          Boolean(mapCopperLayer(entry.name ?? entry.layerId)),
+          Boolean(mapAltiumCopperLayer(entry.name ?? entry.layerId)),
         ).length,
         2,
       )
@@ -349,7 +356,7 @@ function convertTrack(
 ): PcbTrace | undefined {
   const start = record.start
   const end = record.end
-  const layer = mapCopperLayer(record.layer)
+  const layer = mapAltiumCopperLayer(record.layer)
   if (!start || !end || !layer) return undefined
   const width = milsToMillimeters(record.widthMils ?? 4)
   return {
@@ -368,8 +375,8 @@ function convertVia(
   index: number,
 ): PcbVia | undefined {
   if (!record.position) return undefined
-  const startLayer = mapCopperLayer(record.startLayer) ?? "top"
-  const endLayer = mapCopperLayer(record.endLayer) ?? "bottom"
+  const startLayer = mapAltiumCopperLayer(record.startLayer) ?? "top"
+  const endLayer = mapAltiumCopperLayer(record.endLayer) ?? "bottom"
   const layers = startLayer === endLayer ? [startLayer] : [startLayer, endLayer]
   const outerDiameter = milsToMillimeters(record.diameterMils ?? 20)
   return {
@@ -540,7 +547,7 @@ function convertPad(
     }
   }
 
-  const layer = mapCopperLayer(record.layer)
+  const layer = mapAltiumCopperLayer(record.layer)
   if (!layer) return undefined
   const base = {
     type: "pcb_smtpad" as const,
@@ -718,16 +725,6 @@ function mapTextAnchor(
   if (normalized?.includes("RIGHT")) return "bottom_right"
   if (normalized?.includes("LEFT")) return "bottom_left"
   return "center"
-}
-
-function mapCopperLayer(layer: string | undefined): LayerRef | undefined {
-  const normalized = normalizeLayer(layer)
-  if (normalized === "TOP" || normalized === "TOPLAYER") return "top"
-  if (normalized === "BOTTOM" || normalized === "BOTTOMLAYER") return "bottom"
-  const innerMatch = /^(?:MID|MIDLAYER|INTERNALPLANE)(\d+)$/u.exec(normalized)
-  if (!innerMatch?.[1]) return undefined
-  const innerNumber = Math.min(Math.max(Number(innerMatch[1]), 1), 8)
-  return `inner${innerNumber}` as LayerRef
 }
 
 function isOverlayLayer(layer: string | undefined): boolean {
