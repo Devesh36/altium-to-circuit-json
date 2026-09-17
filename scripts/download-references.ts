@@ -5,9 +5,10 @@ import { unzipSync } from "fflate"
 import {
   DIRECT_REFERENCES,
   type DirectReferenceSpec,
-  NESTED_ZIP_BUNDLES,
-  type NestedZipBundleSpec,
   REFERENCE_OUTPUT_DIRECTORY,
+  ZIP_BUNDLES,
+  type ZipBundleSpec,
+  type ZipOutputSpec,
 } from "./references/reference-manifest"
 
 async function downloadDirectReference(
@@ -26,13 +27,13 @@ async function downloadDirectReference(
   )
 }
 
-async function downloadNestedZipBundle(
-  reference: NestedZipBundleSpec,
-): Promise<void> {
+async function downloadZipBundle(reference: ZipBundleSpec): Promise<void> {
+  const allOutputs = [
+    ...reference.outputs,
+    ...reference.nestedArchives.flatMap(({ outputs }) => outputs),
+  ]
   const cachedResults = await Promise.all(
-    reference.outputs.map((output) =>
-      hasExpectedHash(output.filename, output.sha256),
-    ),
+    allOutputs.map((output) => hasExpectedHash(output.filename, output.sha256)),
   )
   if (cachedResults.every(Boolean)) {
     console.log(`Using cached ${reference.source}`)
@@ -41,30 +42,50 @@ async function downloadNestedZipBundle(
 
   const archiveBytes = await fetchBytes(reference.url)
   verifySha256(
-    `${reference.source} outer archive`,
+    `${reference.source} archive`,
     archiveBytes,
     reference.archiveSha256,
   )
-  const nestedArchive = getExtractedEntry(
-    unzipSync(archiveBytes, {
-      filter: ({ name }) => name === reference.nestedArchivePath,
-    }),
-    reference.nestedArchivePath,
-  )
-  verifySha256(
-    `${reference.source} nested archive`,
-    nestedArchive,
-    reference.nestedArchiveSha256,
-  )
-
   const expectedPaths = new Set(
-    reference.outputs.map((output) => output.nestedFilePath),
+    reference.outputs
+      .map((output) => output.archivePath)
+      .concat(
+        reference.nestedArchives.map(
+          (nestedArchive) => nestedArchive.archivePath,
+        ),
+      ),
   )
-  const entries = unzipSync(nestedArchive, {
+  const entries = unzipSync(archiveBytes, {
     filter: ({ name }) => expectedPaths.has(name),
   })
-  for (const output of reference.outputs) {
-    const bytes = getExtractedEntry(entries, output.nestedFilePath)
+
+  await writeZipOutputs(reference.outputs, entries)
+  for (const nestedArchive of reference.nestedArchives) {
+    const nestedArchiveBytes = getExtractedEntry(
+      entries,
+      nestedArchive.archivePath,
+    )
+    verifySha256(
+      `${reference.source} nested archive ${nestedArchive.archivePath}`,
+      nestedArchiveBytes,
+      nestedArchive.sha256,
+    )
+    const nestedPaths = new Set(
+      nestedArchive.outputs.map((output) => output.archivePath),
+    )
+    const nestedEntries = unzipSync(nestedArchiveBytes, {
+      filter: ({ name }) => nestedPaths.has(name),
+    })
+    await writeZipOutputs(nestedArchive.outputs, nestedEntries)
+  }
+}
+
+async function writeZipOutputs(
+  outputs: ZipOutputSpec[],
+  entries: Record<string, Uint8Array>,
+): Promise<void> {
+  for (const output of outputs) {
+    const bytes = getExtractedEntry(entries, output.archivePath)
     verifySha256(output.filename, bytes, output.sha256)
     await writeReference(output.filename, bytes)
     console.log(`Saved ${output.filename} (${bytes.byteLength} bytes)`)
@@ -134,5 +155,5 @@ function verifySha256(
 await mkdir(REFERENCE_OUTPUT_DIRECTORY, { recursive: true })
 await Promise.all([
   ...DIRECT_REFERENCES.map(downloadDirectReference),
-  ...NESTED_ZIP_BUNDLES.map(downloadNestedZipBundle),
+  ...ZIP_BUNDLES.map(downloadZipBundle),
 ])

@@ -80,7 +80,7 @@ and project-level hierarchy remain follow-up areas.
 
 ## Visual tests
 
-Download the checksum-pinned open-source reference files and run the tests:
+Download the checksum-pinned upstream reference files and run the tests:
 
 ```sh
 bun run test
@@ -97,6 +97,11 @@ Every imported reference used by the test suite has a side-by-side SVG snapshot.
 The real-world PCB corpus covers NodeMCU ESP-12, EBAZ4205, HERON Payload SSM,
 SimpleFOC Mini, and SimpleFOC Shield V3. The schematic corpus covers NodeMCU,
 HERON PAY-SSM and Systems PCB, SimpleFOC Mini, and SimpleFOC Shield V3.
+
+The TI power-reference PCB corpus covers PMP23595, the PMP23653 main and planar
+transformer boards, and the PMP22650 package's PMP22650, PMP22712, and PMP22773
+boards. Each is downloaded directly from its checksum-pinned TI CAD/CAE archive
+and has an Altium-to-Circuit-JSON side-by-side SVG repro.
 
 The TI SPRCAL9 / TMDS62LEVM Rev. B regression corpus includes all 57
 schematic sheets and a top-copper PCB comparison. Its large downloaded source
