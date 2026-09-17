@@ -145,6 +145,8 @@ export function convertAltiumPcbDocToCircuitJson(
     } else if (record instanceof AltiumFillRecord) {
       const rect = convertSilkscreenFill(record, index)
       if (rect) elements.push(rect)
+    } else if (record instanceof AltiumRegionRecord) {
+      elements.push(...convertSilkscreenRegion(record, index))
     } else if (record instanceof AltiumTextRecord) {
       const text = convertSilkscreenText(record, index)
       if (text) elements.push(text)
@@ -670,6 +672,38 @@ function convertSilkscreenFill(
     ccw_rotation: record.rotation,
     layer: mapOverlayLayer(record.layer),
   }
+}
+
+function convertSilkscreenRegion(
+  record: AltiumRegionRecord,
+  index: number,
+): PcbSilkscreenPath[] {
+  const geometry = getPcbRegionGeometry(record)
+  return [geometry.outline, ...geometry.holes].flatMap(
+    (contour, contourIndex) => {
+      const route = contour.points.map(toMillimeterPoint)
+      if (route.length < 3) return []
+      const firstPoint = route[0]
+      const lastPoint = route.at(-1)
+      if (
+        firstPoint &&
+        lastPoint &&
+        (firstPoint.x !== lastPoint.x || firstPoint.y !== lastPoint.y)
+      ) {
+        route.push(firstPoint)
+      }
+      return [
+        {
+          type: "pcb_silkscreen_path",
+          pcb_silkscreen_path_id: `pcb_silkscreen_path_altium_region_${index}_${contourIndex}`,
+          pcb_component_id: pcbComponentIdForRecord(record),
+          route,
+          stroke_width: milsToMillimeters(4),
+          layer: mapOverlayLayer(record.layer),
+        },
+      ]
+    },
+  )
 }
 
 function convertSilkscreenText(
