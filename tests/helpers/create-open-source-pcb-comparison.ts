@@ -1,6 +1,7 @@
 import {
   AltiumBinaryPcbDoc,
   AltiumPcbDoc,
+  getPcbBoardGeometry,
   parseAltiumFile,
   serializeAltiumPcbToSvg,
 } from "altiumts"
@@ -18,9 +19,11 @@ interface OpenSourcePcbComparison {
 
 export async function createOpenSourcePcbComparison({
   filename,
+  focusOnBoard = false,
   pcbName,
 }: {
   filename: string
+  focusOnBoard?: boolean
   pcbName: string
 }): Promise<OpenSourcePcbComparison> {
   const source = await readReferenceBytes(filename)
@@ -34,13 +37,40 @@ export async function createOpenSourcePcbComparison({
     )
   }
   const circuitJson = convertAltiumToCircuitJson(source, { sourceType: "pcb" })
+  const board = circuitJson.find((element) => element.type === "pcb_board")
+  if (!board) throw new Error(`${filename} did not produce a PCB board`)
+
+  const boardBounds = focusOnBoard
+    ? getPcbBoardGeometry(document).outline.bounds
+    : undefined
+  if (focusOnBoard && !boardBounds) {
+    throw new Error(`${filename} does not contain an Altium board outline`)
+  }
+  const boardPadding = boardBounds
+    ? Math.max(
+        boardBounds.maxX - boardBounds.minX,
+        boardBounds.maxY - boardBounds.minY,
+      ) * 0.05
+    : 0
   const altiumSvg = serializeAltiumPcbToSvg(document, {
     height: 600,
     title: "altiumts source rendering",
+    viewBox:
+      focusOnBoard && boardBounds
+        ? {
+            height: boardBounds.maxY - boardBounds.minY + 2 * boardPadding,
+            width: boardBounds.maxX - boardBounds.minX + 2 * boardPadding,
+            x: boardBounds.minX - boardPadding,
+            y: boardBounds.minY - boardPadding,
+          }
+        : undefined,
     width: 800,
   })
   const circuitJsonSvg = convertCircuitJsonToPcbSvg(circuitJson, {
     matchBoardAspectRatio: true,
+    viewportTarget: focusOnBoard
+      ? { pcb_board_id: board.pcb_board_id }
+      : undefined,
   })
   const comparisonSvg = stackAltiumAndCircuitJsonSvgs({
     altiumSvg,
