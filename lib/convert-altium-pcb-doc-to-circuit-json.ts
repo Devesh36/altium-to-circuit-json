@@ -1,5 +1,6 @@
 import {
   AltiumArcRecord,
+  AltiumComponentBodyRecord,
   AltiumFillRecord,
   AltiumPadRecord,
   type AltiumPcbDocument,
@@ -21,6 +22,7 @@ import type {
   PcbComponent,
   PcbCourtyardOutline,
   PcbCutout,
+  PcbFabricationNotePath,
   PcbHole,
   PcbPlatedHole,
   PcbSilkscreenLine,
@@ -44,6 +46,7 @@ export interface ConvertAltiumPcbDocOptions {
   includeBoardOutline?: boolean
   includeComponents?: boolean
   includeCopperAreas?: boolean
+  includeComponentBodies?: boolean
   includeCourtyards?: boolean
   includePads?: boolean
   includeSilkscreen?: boolean
@@ -107,6 +110,14 @@ export function convertAltiumPcbDocToCircuitJson(
   }
 
   for (const [index, record] of document.records.entries()) {
+    if (
+      record instanceof AltiumComponentBodyRecord &&
+      options.includeComponentBodies !== false
+    ) {
+      elements.push(...convertComponentBody(document, record, index))
+      continue
+    }
+
     if (record instanceof AltiumPadRecord && options.includePads !== false) {
       const pad = convertPad(record, index)
       if (pad) elements.push(pad)
@@ -152,6 +163,42 @@ export function convertAltiumPcbDocToCircuitJson(
   }
 
   return elements
+}
+
+function convertComponentBody(
+  document: AltiumPcbDocument,
+  record: AltiumComponentBodyRecord,
+  index: number,
+): PcbFabricationNotePath[] {
+  const geometry = getPcbRegionGeometry(record)
+  const component = document.getComponentForRecord(record)
+  const layer = component?.side === "bottom" ? "bottom" : "top"
+
+  return [geometry.outline, ...geometry.holes].flatMap(
+    (contour, contourIndex) => {
+      const route = contour.points.map(toMillimeterPoint)
+      if (route.length < 3) return []
+      const firstPoint = route[0]
+      const lastPoint = route.at(-1)
+      if (
+        firstPoint &&
+        lastPoint &&
+        (firstPoint.x !== lastPoint.x || firstPoint.y !== lastPoint.y)
+      ) {
+        route.push(firstPoint)
+      }
+      return [
+        {
+          type: "pcb_fabrication_note_path",
+          pcb_fabrication_note_path_id: `pcb_fabrication_note_path_altium_component_body_${index}_${contourIndex}`,
+          pcb_component_id: pcbComponentIdForRecord(record),
+          layer,
+          route,
+          stroke_width: milsToMillimeters(4),
+        },
+      ]
+    },
+  )
 }
 
 interface CourtyardPath {
