@@ -719,12 +719,38 @@ function componentId(index: number): string {
 
 function mapTextAnchor(
   justification: string | undefined,
-): "bottom_left" | "bottom_center" | "bottom_right" | "center" {
+): PcbSilkscreenText["anchor_alignment"] {
   const normalized = justification?.replace(/[\s_-]+/gu, "").toUpperCase()
-  if (normalized?.includes("CENTER")) return "bottom_center"
-  if (normalized?.includes("RIGHT")) return "bottom_right"
-  if (normalized?.includes("LEFT")) return "bottom_left"
-  return "center"
+  const numericJustifications: PcbSilkscreenText["anchor_alignment"][] = [
+    "top_left",
+    "center_left",
+    "bottom_left",
+    "top_center",
+    "center",
+    "bottom_center",
+    "top_right",
+    "center_right",
+    "bottom_right",
+  ]
+  const numericIndex = Number(normalized) - 1
+  if (Number.isInteger(numericIndex) && numericJustifications[numericIndex]) {
+    return numericJustifications[numericIndex]
+  }
+
+  const horizontal = normalized?.includes("RIGHT")
+    ? "right"
+    : normalized?.includes("CENTER") || normalized?.includes("MIDDLE")
+      ? "center"
+      : "left"
+  const vertical = normalized?.includes("TOP")
+    ? "top"
+    : normalized?.includes("BOTTOM")
+      ? "bottom"
+      : "center"
+  if (vertical === "center") {
+    return horizontal === "center" ? "center" : `center_${horizontal}`
+  }
+  return `${vertical}_${horizontal}`
 }
 
 function isOverlayLayer(layer: string | undefined): boolean {
