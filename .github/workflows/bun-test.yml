@@ -28,8 +28,6 @@ jobs:
         run: bun run download-references
       - name: Run tests
         run: bun test
-        env:
-          BUN_UPDATE_SNAPSHOTS: "1"
       - name: Upload visual snapshot artifacts
         if: always()
         uses: actions/upload-artifact@v4
