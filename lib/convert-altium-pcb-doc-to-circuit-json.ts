@@ -524,7 +524,8 @@ function convertPad(
   const width = milsToMillimeters(size.width)
   const height = milsToMillimeters(size.height)
   const holeDiameter = milsToMillimeters(record.holeSizeMils ?? 0)
-  const shape = normalizeShape(record.shape)
+  const shape = getPadShape(record)
+  const cornerRadius = getPadCornerRadius(record, width, height, shape)
   const id = `altium_${index}`
 
   if (record.plated === false && holeDiameter > 0) {
@@ -603,9 +604,7 @@ function convertPad(
         hole_diameter: Math.max(holeDiameter, MILS_TO_MILLIMETERS),
         rect_pad_width: width,
         rect_pad_height: height,
-        rect_border_radius: shape.includes("ROUNDRECT")
-          ? Math.min(width, height) * 0.18
-          : 0,
+        rect_border_radius: cornerRadius ?? 0,
         rect_ccw_rotation: record.rotation,
         hole_offset_x: 0,
         hole_offset_y: 0,
@@ -716,9 +715,6 @@ function convertPad(
         }
   }
 
-  const cornerRadius = shape.includes("ROUNDRECT")
-    ? Math.min(width, height) * 0.18
-    : undefined
   return record.rotation === 0
     ? { ...base, shape: "rect", width, height, corner_radius: cornerRadius }
     : {
@@ -883,6 +879,46 @@ function isRectangularShape(shape: string): boolean {
 
 function getMeasurement(record: AltiumRecord, key: string): number | undefined {
   return parseAltiumMeasurementToMils(record.getCaseInsensitive(key))
+}
+
+function getPadStackLayerOrdinal(record: AltiumPadRecord): number {
+  const layer = normalizeLayer(record.layer)
+  if (layer === "BOTTOM") return 31
+  const innerLayer = /^(?:MIDLAYER|MID|INTERNALPLANE)(\d+)$/u.exec(layer)
+  if (!innerLayer?.[1]) return 0
+  return Math.min(Math.max(Number(innerLayer[1]), 1), 30)
+}
+
+function getPadShape(record: AltiumPadRecord): string {
+  const layerOrdinal = getPadStackLayerOrdinal(record)
+  const alternateShape = normalizeShape(
+    record.getCaseInsensitive(`LAYER${layerOrdinal}ALTSHAPE`),
+  )
+  return isRoundedRectShape(alternateShape)
+    ? alternateShape
+    : normalizeShape(record.shape)
+}
+
+function getPadCornerRadius(
+  record: AltiumPadRecord,
+  width: number,
+  height: number,
+  shape: string,
+): number | undefined {
+  if (!isRoundedRectShape(shape)) return undefined
+
+  const layerOrdinal = getPadStackLayerOrdinal(record)
+  const radiusPercentage = Number(
+    record.getCaseInsensitive(`LAYER${layerOrdinal}CORNERRADIUS`),
+  )
+  if (!Number.isFinite(radiusPercentage)) {
+    return Math.min(width, height) * 0.18
+  }
+  return (Math.min(width, height) * radiusPercentage) / 200
+}
+
+function isRoundedRectShape(shape: string): boolean {
+  return shape.includes("ROUND") && shape.includes("RECT")
 }
 
 function milsToMillimeters(value: number): number {
