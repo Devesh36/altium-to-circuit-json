@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test"
 import { parseAltiumPcbDoc } from "altiumts"
-import type { PcbSilkscreenPath } from "circuit-json"
+import type { PcbSilkscreenGraphic } from "circuit-json"
 import { convertAltiumPcbDocToCircuitJson } from "../../lib"
 
-test("imports Altium overlay regions as closed silkscreen paths", () => {
+test("imports Altium overlay regions as filled silkscreen graphics", () => {
   const document = parseAltiumPcbDoc(
     [
       "|RECORD=Board|KIND0=0|VX0=0mil|VY0=0mil|KIND1=0|VX1=500mil|VY1=0mil|KIND2=0|VX2=500mil|VY2=500mil|KIND3=0|VX3=0mil|VY3=500mil|KIND4=0|VX4=0mil|VY4=0mil",
@@ -11,18 +11,15 @@ test("imports Altium overlay regions as closed silkscreen paths", () => {
     ].join("\n"),
   )
 
-  const paths = convertAltiumPcbDocToCircuitJson(document).filter(
-    (element): element is PcbSilkscreenPath =>
-      element.type === "pcb_silkscreen_path",
+  const graphics = convertAltiumPcbDocToCircuitJson(document).filter(
+    (element): element is PcbSilkscreenGraphic =>
+      element.type === "pcb_silkscreen_graphic",
   )
 
-  expect(paths).toHaveLength(2)
-  expect(paths.every((path) => path.layer === "top")).toBe(true)
-  expect(
-    paths.every(
-      (path) =>
-        path.route[0]?.x === path.route.at(-1)?.x &&
-        path.route[0]?.y === path.route.at(-1)?.y,
-    ),
-  ).toBe(true)
+  expect(graphics).toHaveLength(1)
+  expect(graphics[0]?.layer).toBe("top")
+  expect(graphics[0]?.shape).toBe("brep")
+  expect(graphics[0]?.brep_shape.outer_ring.vertices).toHaveLength(4)
+  expect(graphics[0]?.brep_shape.inner_rings).toHaveLength(1)
+  expect(graphics[0]?.brep_shape.inner_rings[0]?.vertices).toHaveLength(4)
 })

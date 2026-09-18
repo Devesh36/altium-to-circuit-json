@@ -23,6 +23,7 @@ import type {
   PcbCutout,
   PcbHole,
   PcbPlatedHole,
+  PcbSilkscreenGraphic,
   PcbSilkscreenLine,
   PcbSilkscreenPath,
   PcbSilkscreenRect,
@@ -146,7 +147,8 @@ export function convertAltiumPcbDocToCircuitJson(
       const rect = convertSilkscreenFill(record, index)
       if (rect) elements.push(rect)
     } else if (record instanceof AltiumRegionRecord) {
-      elements.push(...convertSilkscreenRegion(record, index))
+      const graphic = convertSilkscreenRegion(record, index)
+      if (graphic) elements.push(graphic)
     } else if (record instanceof AltiumTextRecord) {
       const text = convertSilkscreenText(record, index)
       if (text) elements.push(text)
@@ -677,33 +679,26 @@ function convertSilkscreenFill(
 function convertSilkscreenRegion(
   record: AltiumRegionRecord,
   index: number,
-): PcbSilkscreenPath[] {
+): PcbSilkscreenGraphic | undefined {
   const geometry = getPcbRegionGeometry(record)
-  return [geometry.outline, ...geometry.holes].flatMap(
-    (contour, contourIndex) => {
-      const route = contour.points.map(toMillimeterPoint)
-      if (route.length < 3) return []
-      const firstPoint = route[0]
-      const lastPoint = route.at(-1)
-      if (
-        firstPoint &&
-        lastPoint &&
-        (firstPoint.x !== lastPoint.x || firstPoint.y !== lastPoint.y)
-      ) {
-        route.push(firstPoint)
-      }
-      return [
-        {
-          type: "pcb_silkscreen_path",
-          pcb_silkscreen_path_id: `pcb_silkscreen_path_altium_region_${index}_${contourIndex}`,
-          pcb_component_id: pcbComponentIdForRecord(record),
-          route,
-          stroke_width: milsToMillimeters(4),
-          layer: mapOverlayLayer(record.layer),
-        },
-      ]
+  const outerVertices = geometry.outline.points.map(toMillimeterPoint)
+  if (outerVertices.length < 3) return undefined
+
+  return {
+    type: "pcb_silkscreen_graphic",
+    pcb_silkscreen_graphic_id: `pcb_silkscreen_graphic_altium_region_${index}`,
+    pcb_component_id: pcbComponentIdForRecord(record),
+    layer: mapOverlayLayer(record.layer),
+    shape: "brep",
+    brep_shape: {
+      outer_ring: { vertices: outerVertices },
+      inner_rings: geometry.holes
+        .map((hole) => ({
+          vertices: hole.points.map(toMillimeterPoint),
+        }))
+        .filter((ring) => ring.vertices.length >= 3),
     },
-  )
+  }
 }
 
 function convertSilkscreenText(
