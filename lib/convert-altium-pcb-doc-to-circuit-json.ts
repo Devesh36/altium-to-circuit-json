@@ -18,8 +18,10 @@ import {
 import type {
   AnyCircuitElement,
   LayerRef,
+  PCBKeepoutCircle,
   PcbBoard,
   PcbComponent,
+  PcbCopperText,
   PcbCourtyardOutline,
   PcbCutout,
   PcbFabricationNoteDimension,
@@ -29,17 +31,22 @@ import type {
   PcbSilkscreenPath,
   PcbSilkscreenRect,
   PcbSilkscreenText,
-  PcbCopperText,
   PcbSmtPad,
   PcbTrace,
   PcbVia,
 } from "circuit-json"
 import { convertAltiumCopperAreas } from "./pcb/convert-altium-copper-areas"
+import {
+  getAltiumPadGeometry,
+  getAltiumPadHoleGeometry,
+  getAltiumSlotHoleSize,
+} from "./pcb/get-altium-pad-geometry"
 import { getPreferredPcbBoardOutline } from "./pcb/get-board-outline"
 import { mapAltiumCopperLayer } from "./pcb/map-altium-copper-layer"
 import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
 
 const MILS_TO_MILLIMETERS = 0.0254
+const ALTIUM_SLOT_HOLE_TYPE = 2
 const BOARD_ID = "pcb_board_altium"
 const BOARD_GRAPHICS_COMPONENT_ID = "pcb_component_altium_board_graphics"
 
@@ -48,6 +55,7 @@ export interface ConvertAltiumPcbDocOptions {
   includeComponents?: boolean
   includeCopperAreas?: boolean
   includeCourtyards?: boolean
+  includeKeepouts?: boolean
   includeDimensions?: boolean
   includePads?: boolean
   includeSilkscreen?: boolean
@@ -112,6 +120,20 @@ export function convertAltiumPcbDocToCircuitJson(
 
   for (const [index, record] of document.records.entries()) {
     if (
+      record instanceof AltiumArcRecord &&
+      isKeepoutLayer(record.layer) &&
+      options.includeKeepouts !== false
+    ) {
+      const keepout = convertCircularKeepout({
+        record,
+        recordIndex: index,
+        document,
+      })
+      if (keepout) elements.push(keepout)
+      continue
+    }
+
+    if (
       record instanceof AltiumDimensionRecord &&
       options.includeDimensions !== false
     ) {
@@ -145,6 +167,19 @@ export function convertAltiumPcbDocToCircuitJson(
       continue
     }
 
+    if (record instanceof AltiumArcRecord) {
+      if (isCourtyardLayer(record.layer)) continue
+      if (isOverlayLayer(record.layer)) {
+        if (options.includeSilkscreen === false) continue
+        const path = convertSilkscreenArc(record, index)
+        if (path) elements.push(path)
+      } else if (options.includeTraces !== false) {
+        const trace = convertArcTrack(record, index)
+        if (trace) elements.push(trace)
+      }
+      continue
+    }
+
     if (record instanceof AltiumTextRecord) {
       if (isCourtyardLayer(record.layer)) continue
       if (isOverlayLayer(record.layer)) {
@@ -165,16 +200,50 @@ export function convertAltiumPcbDocToCircuitJson(
       continue
     }
 
-    if (record instanceof AltiumArcRecord) {
-      const path = convertSilkscreenArc(record, index)
-      if (path) elements.push(path)
-    } else if (record instanceof AltiumFillRecord) {
+    if (record instanceof AltiumFillRecord) {
       const rect = convertSilkscreenFill(record, index)
       if (rect) elements.push(rect)
     }
   }
 
   return elements
+}
+
+function convertCircularKeepout({
+  record,
+  recordIndex,
+  document,
+}: {
+  record: AltiumArcRecord
+  recordIndex: number
+  document: AltiumPcbDocument
+}): PCBKeepoutCircle | undefined {
+  const center = record.center
+  const radiusMils = record.radiusMils
+  const rawSweep = record.endAngle - record.startAngle
+  const isFullCircle = rawSweep === 0 || Math.abs(rawSweep) >= 360
+  if (!center || !radiusMils || !isFullCircle) return undefined
+
+  return {
+    type: "pcb_keepout",
+    pcb_keepout_id: `pcb_keepout_altium_arc_${recordIndex}`,
+    shape: "circle",
+    center: toMillimeterPoint(center),
+    radius: milsToMillimeters(radiusMils + (record.widthMils ?? 0) / 2),
+    layers: getCopperLayers(document),
+    description: "Altium circular keepout",
+  }
+}
+
+function getCopperLayers(document: AltiumPcbDocument): LayerRef[] {
+  if (!document.board) return ["top", "bottom"]
+  const layers: LayerRef[] = getPcbLayerStack(document.board).entries.flatMap(
+    (entry) => {
+      const layer = mapAltiumCopperLayer(entry.name ?? entry.layerId)
+      return layer ? [layer] : []
+    },
+  )
+  return layers.length > 0 ? [...new Set(layers)] : ["top", "bottom"]
 }
 
 function convertDimension(
@@ -464,6 +533,34 @@ function convertTrack(
   }
 }
 
+function convertArcTrack(
+  record: AltiumArcRecord,
+  index: number,
+): PcbTrace | undefined {
+  if (!record.center || !record.radiusMils) return undefined
+  const layer = mapAltiumCopperLayer(record.layer)
+  if (!layer) return undefined
+  const width = milsToMillimeters(record.widthMils ?? 4)
+  const points = approximateArc({
+    center: record.center,
+    radius: record.radiusMils,
+    startAngle: record.startAngle,
+    endAngle: record.endAngle,
+  })
+
+  return {
+    type: "pcb_trace",
+    pcb_trace_id: `pcb_trace_altium_arc_${index}`,
+    should_round_corners: true,
+    route: points.map((point) => ({
+      route_type: "wire",
+      ...toMillimeterPoint(point),
+      width,
+      layer,
+    })),
+  }
+}
+
 function convertCopperText(
   record: AltiumTextRecord,
   index: number,
@@ -517,15 +614,18 @@ function convertPad(
   index: number,
 ): PcbSmtPad | PcbPlatedHole | PcbHole | undefined {
   const position = record.position
-  const size = record.size
-  if (!position || !size) return undefined
+  const geometry = getAltiumPadGeometry(record)
+  if (!position || !geometry) return undefined
   const x = milsToMillimeters(position.x)
   const y = milsToMillimeters(position.y)
-  const width = milsToMillimeters(size.width)
-  const height = milsToMillimeters(size.height)
+  const width = milsToMillimeters(geometry.widthMils)
+  const height = milsToMillimeters(geometry.heightMils)
+  const cornerRadius =
+    geometry.cornerRadiusMils === undefined
+      ? undefined
+      : milsToMillimeters(geometry.cornerRadiusMils)
   const holeDiameter = milsToMillimeters(record.holeSizeMils ?? 0)
-  const holeOffset = getPadHoleOffset(record)
-  const shape = normalizeShape(record.shape)
+  const shape = normalizeShape(geometry.shape)
   const id = `altium_${index}`
 
   if (record.plated === false && holeDiameter > 0) {
@@ -540,24 +640,25 @@ function convertPad(
   }
 
   if (record.behavior === "through-hole" || holeDiameter > 0) {
+    const holeGeometry = getAltiumPadHoleGeometry(record)
+    const holeOffsetX = milsToMillimeters(holeGeometry.offsetXMils)
+    const holeOffsetY = milsToMillimeters(holeGeometry.offsetYMils)
     const slotLengthMils = getMeasurement(record, "SLOTLENGTH")
     const holeWidthMils = record.holeWidthMils ?? record.holeSizeMils
     const isSlot =
+      record.getNumber("HOLETYPE") === ALTIUM_SLOT_HOLE_TYPE ||
       normalizeShape(record.holeType).includes("SLOT") ||
       (slotLengthMils ?? 0) > (record.holeSizeMils ?? 0) ||
       (holeWidthMils ?? 0) > (record.holeSizeMils ?? 0)
     const layers: LayerRef[] = ["top", "bottom"]
 
     if (isSlot) {
-      const holeWidth = milsToMillimeters(
-        Math.max(
-          slotLengthMils ?? holeWidthMils ?? record.holeSizeMils ?? 1,
-          1,
-        ),
-      )
-      const holeHeight = Math.max(holeDiameter, MILS_TO_MILLIMETERS)
+      const slotHoleSize = getAltiumSlotHoleSize(record)
+      const holeWidth = milsToMillimeters(slotHoleSize.widthMils)
+      const holeHeight = milsToMillimeters(slotHoleSize.heightMils)
       if (isRectangularShape(shape)) {
-        const rotated = record.holeRotation !== 0 || record.rotation !== 0
+        const rotated =
+          holeGeometry.ccwRotationDegrees !== 0 || record.rotation !== 0
         return {
           type: "pcb_plated_hole",
           pcb_plated_hole_id: `pcb_plated_hole_${id}`,
@@ -568,19 +669,23 @@ function convertPad(
           pad_shape: "rect",
           hole_width: holeWidth,
           hole_height: holeHeight,
-          ...(rotated ? { hole_ccw_rotation: record.holeRotation } : {}),
+          ...(rotated
+            ? { hole_ccw_rotation: holeGeometry.ccwRotationDegrees }
+            : {}),
           rect_pad_width: width,
           rect_pad_height: height,
+          rect_border_radius: cornerRadius,
           ...(rotated ? { rect_ccw_rotation: record.rotation } : {}),
-          hole_offset_x: holeOffset.x,
-          hole_offset_y: holeOffset.y,
+          hole_offset_x: holeOffsetX,
+          hole_offset_y: holeOffsetY,
           x,
           y,
           layers,
         } as PcbPlatedHole
       }
-      if (holeOffset.x !== 0 || holeOffset.y !== 0) {
-        const rotated = record.holeRotation !== 0 || record.rotation !== 0
+      if (holeOffsetX !== 0 || holeOffsetY !== 0) {
+        const rotated =
+          holeGeometry.ccwRotationDegrees !== 0 || record.rotation !== 0
         return {
           type: "pcb_plated_hole",
           pcb_plated_hole_id: `pcb_plated_hole_${id}`,
@@ -591,13 +696,15 @@ function convertPad(
           pad_shape: "rect",
           hole_width: holeWidth,
           hole_height: holeHeight,
-          ...(rotated ? { hole_ccw_rotation: record.holeRotation } : {}),
+          ...(rotated
+            ? { hole_ccw_rotation: holeGeometry.ccwRotationDegrees }
+            : {}),
           rect_pad_width: width,
           rect_pad_height: height,
           rect_border_radius: Math.min(width, height) / 2,
           ...(rotated ? { rect_ccw_rotation: record.rotation } : {}),
-          hole_offset_x: holeOffset.x,
-          hole_offset_y: holeOffset.y,
+          hole_offset_x: holeOffsetX,
+          hole_offset_y: holeOffsetY,
           x,
           y,
           layers,
@@ -611,7 +718,7 @@ function convertPad(
         outer_height: height,
         hole_width: holeWidth,
         hole_height: holeHeight,
-        ccw_rotation: record.holeRotation || record.rotation,
+        ccw_rotation: holeGeometry.ccwRotationDegrees,
         x,
         y,
         layers,
@@ -628,12 +735,10 @@ function convertPad(
         hole_diameter: Math.max(holeDiameter, MILS_TO_MILLIMETERS),
         rect_pad_width: width,
         rect_pad_height: height,
-        rect_border_radius: shape.includes("ROUNDRECT")
-          ? Math.min(width, height) * 0.18
-          : 0,
+        rect_border_radius: cornerRadius,
         rect_ccw_rotation: record.rotation,
-        hole_offset_x: holeOffset.x,
-        hole_offset_y: holeOffset.y,
+        hole_offset_x: holeOffsetX,
+        hole_offset_y: holeOffsetY,
         x,
         y,
         layers,
@@ -654,8 +759,8 @@ function convertPad(
           height,
           rotation: record.rotation,
         }),
-        hole_offset_x: holeOffset.x,
-        hole_offset_y: holeOffset.y,
+        hole_offset_x: holeOffsetX,
+        hole_offset_y: holeOffsetY,
         x,
         y,
         layers,
@@ -663,7 +768,7 @@ function convertPad(
     }
 
     if (shape === "ROUND" || shape === "CIRCLE" || shape === "OVAL") {
-      if (holeOffset.x !== 0 || holeOffset.y !== 0) {
+      if (holeOffsetX !== 0 || holeOffsetY !== 0) {
         return {
           type: "pcb_plated_hole",
           pcb_plated_hole_id: `pcb_plated_hole_${id}`,
@@ -675,8 +780,8 @@ function convertPad(
           rect_pad_height: height,
           rect_border_radius: Math.min(width, height) / 2,
           rect_ccw_rotation: record.rotation,
-          hole_offset_x: holeOffset.x,
-          hole_offset_y: holeOffset.y,
+          hole_offset_x: holeOffsetX,
+          hole_offset_y: holeOffsetY,
           x,
           y,
           layers,
@@ -760,9 +865,6 @@ function convertPad(
         }
   }
 
-  const cornerRadius = shape.includes("ROUNDRECT")
-    ? Math.min(width, height) * 0.18
-    : undefined
   return record.rotation === 0
     ? { ...base, shape: "rect", width, height, corner_radius: cornerRadius }
     : {
@@ -896,6 +998,10 @@ function isOverlayLayer(layer: string | undefined): boolean {
   return normalized === "TOPOVERLAY" || normalized === "BOTTOMOVERLAY"
 }
 
+function isKeepoutLayer(layer: string | undefined): boolean {
+  return normalizeLayer(layer) === "KEEPOUT"
+}
+
 function isCourtyardLayer(layer: string | undefined): boolean {
   const normalized = normalizeLayer(layer)
   return normalized === "MECHANICAL15" || normalized === "MECHANICAL16"
@@ -927,31 +1033,6 @@ function isRectangularShape(shape: string): boolean {
 
 function getMeasurement(record: AltiumRecord, key: string): number | undefined {
   return parseAltiumMeasurementToMils(record.getCaseInsensitive(key))
-}
-
-function getPadHoleOffset(record: AltiumPadRecord): {
-  x: number
-  y: number
-} {
-  const layerOrdinal = normalizeLayer(record.layer) === "BOTTOM" ? 31 : 0
-  const localX =
-    getMeasurement(record, `LAYER${layerOrdinal}HOLEXOFFSET`) ??
-    getMeasurement(record, `PADXOFFSET${layerOrdinal}`) ??
-    0
-  const localY =
-    getMeasurement(record, `LAYER${layerOrdinal}HOLEYOFFSET`) ??
-    getMeasurement(record, `PADYOFFSET${layerOrdinal}`) ??
-    0
-  const rotationRadians = (record.rotation * Math.PI) / 180
-
-  return {
-    x: milsToMillimeters(
-      localX * Math.cos(rotationRadians) - localY * Math.sin(rotationRadians),
-    ),
-    y: milsToMillimeters(
-      localX * Math.sin(rotationRadians) + localY * Math.cos(rotationRadians),
-    ),
-  }
 }
 
 function milsToMillimeters(value: number): number {
