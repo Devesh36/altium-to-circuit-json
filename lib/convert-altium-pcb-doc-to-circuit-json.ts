@@ -49,6 +49,7 @@ export interface ConvertAltiumPcbDocOptions {
   includeCopperAreas?: boolean
   includeCourtyards?: boolean
   includeDimensions?: boolean
+  includeHiddenText?: boolean
   includePads?: boolean
   includeSilkscreen?: boolean
   includeTraces?: boolean
@@ -60,6 +61,7 @@ export function convertAltiumPcbDocToCircuitJson(
   options: ConvertAltiumPcbDocOptions = {},
 ): AnyCircuitElement[] {
   const elements: AnyCircuitElement[] = []
+  const componentLookup = createComponentLookup(document)
 
   if (options.includeBoardOutline !== false) {
     elements.push(createBoard(document))
@@ -146,6 +148,12 @@ export function convertAltiumPcbDocToCircuitJson(
     }
 
     if (record instanceof AltiumTextRecord) {
+      if (
+        options.includeHiddenText !== true &&
+        !isVisibleComponentText(record, componentLookup)
+      ) {
+        continue
+      }
       if (isCourtyardLayer(record.layer)) continue
       if (isOverlayLayer(record.layer)) {
         if (options.includeSilkscreen === false) continue
@@ -175,6 +183,42 @@ export function convertAltiumPcbDocToCircuitJson(
   }
 
   return elements
+}
+
+function createComponentLookup(
+  document: AltiumPcbDocument,
+): Map<number, AltiumRecord> {
+  const lookup = new Map<number, AltiumRecord>()
+  for (const [index, component] of document.components.entries()) {
+    lookup.set(index, component)
+    const id = component.getNumber("ID")
+    if (id !== undefined) lookup.set(id, component)
+  }
+  return lookup
+}
+
+function isVisibleComponentText(
+  record: AltiumTextRecord,
+  componentLookup: Map<number, AltiumRecord>,
+): boolean {
+  const componentIndex = record.getNumber("COMPONENT")
+  if (componentIndex === undefined || componentIndex === 65535) return true
+
+  const component = componentLookup.get(componentIndex)
+  if (!component) return true
+  if (
+    record.getBoolean("DESIGNATOR") === true &&
+    component.getBoolean("NAMEON") === false
+  ) {
+    return false
+  }
+  if (
+    record.getBoolean("COMMENT") === true &&
+    component.getBoolean("COMMENTON") === false
+  ) {
+    return false
+  }
+  return true
 }
 
 function convertDimension(
