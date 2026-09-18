@@ -524,6 +524,7 @@ function convertPad(
   const width = milsToMillimeters(size.width)
   const height = milsToMillimeters(size.height)
   const holeDiameter = milsToMillimeters(record.holeSizeMils ?? 0)
+  const holeOffset = getPadHoleOffset(record)
   const shape = normalizeShape(record.shape)
   const id = `altium_${index}`
 
@@ -571,8 +572,32 @@ function convertPad(
           rect_pad_width: width,
           rect_pad_height: height,
           ...(rotated ? { rect_ccw_rotation: record.rotation } : {}),
-          hole_offset_x: 0,
-          hole_offset_y: 0,
+          hole_offset_x: holeOffset.x,
+          hole_offset_y: holeOffset.y,
+          x,
+          y,
+          layers,
+        } as PcbPlatedHole
+      }
+      if (holeOffset.x !== 0 || holeOffset.y !== 0) {
+        const rotated = record.holeRotation !== 0 || record.rotation !== 0
+        return {
+          type: "pcb_plated_hole",
+          pcb_plated_hole_id: `pcb_plated_hole_${id}`,
+          shape: rotated
+            ? "rotated_pill_hole_with_rect_pad"
+            : "pill_hole_with_rect_pad",
+          hole_shape: rotated ? "rotated_pill" : "pill",
+          pad_shape: "rect",
+          hole_width: holeWidth,
+          hole_height: holeHeight,
+          ...(rotated ? { hole_ccw_rotation: record.holeRotation } : {}),
+          rect_pad_width: width,
+          rect_pad_height: height,
+          rect_border_radius: Math.min(width, height) / 2,
+          ...(rotated ? { rect_ccw_rotation: record.rotation } : {}),
+          hole_offset_x: holeOffset.x,
+          hole_offset_y: holeOffset.y,
           x,
           y,
           layers,
@@ -607,8 +632,8 @@ function convertPad(
           ? Math.min(width, height) * 0.18
           : 0,
         rect_ccw_rotation: record.rotation,
-        hole_offset_x: 0,
-        hole_offset_y: 0,
+        hole_offset_x: holeOffset.x,
+        hole_offset_y: holeOffset.y,
         x,
         y,
         layers,
@@ -629,8 +654,8 @@ function convertPad(
           height,
           rotation: record.rotation,
         }),
-        hole_offset_x: 0,
-        hole_offset_y: 0,
+        hole_offset_x: holeOffset.x,
+        hole_offset_y: holeOffset.y,
         x,
         y,
         layers,
@@ -638,6 +663,25 @@ function convertPad(
     }
 
     if (shape === "ROUND" || shape === "CIRCLE" || shape === "OVAL") {
+      if (holeOffset.x !== 0 || holeOffset.y !== 0) {
+        return {
+          type: "pcb_plated_hole",
+          pcb_plated_hole_id: `pcb_plated_hole_${id}`,
+          shape: "circular_hole_with_rect_pad",
+          hole_shape: "circle",
+          pad_shape: "rect",
+          hole_diameter: Math.max(holeDiameter, MILS_TO_MILLIMETERS),
+          rect_pad_width: width,
+          rect_pad_height: height,
+          rect_border_radius: Math.min(width, height) / 2,
+          rect_ccw_rotation: record.rotation,
+          hole_offset_x: holeOffset.x,
+          hole_offset_y: holeOffset.y,
+          x,
+          y,
+          layers,
+        }
+      }
       if (Math.abs(width - height) >= 0.0001) {
         return {
           type: "pcb_plated_hole",
@@ -883,6 +927,31 @@ function isRectangularShape(shape: string): boolean {
 
 function getMeasurement(record: AltiumRecord, key: string): number | undefined {
   return parseAltiumMeasurementToMils(record.getCaseInsensitive(key))
+}
+
+function getPadHoleOffset(record: AltiumPadRecord): {
+  x: number
+  y: number
+} {
+  const layerOrdinal = normalizeLayer(record.layer) === "BOTTOM" ? 31 : 0
+  const localX =
+    getMeasurement(record, `LAYER${layerOrdinal}HOLEXOFFSET`) ??
+    getMeasurement(record, `PADXOFFSET${layerOrdinal}`) ??
+    0
+  const localY =
+    getMeasurement(record, `LAYER${layerOrdinal}HOLEYOFFSET`) ??
+    getMeasurement(record, `PADYOFFSET${layerOrdinal}`) ??
+    0
+  const rotationRadians = (record.rotation * Math.PI) / 180
+
+  return {
+    x: milsToMillimeters(
+      localX * Math.cos(rotationRadians) - localY * Math.sin(rotationRadians),
+    ),
+    y: milsToMillimeters(
+      localX * Math.sin(rotationRadians) + localY * Math.cos(rotationRadians),
+    ),
+  }
 }
 
 function milsToMillimeters(value: number): number {
