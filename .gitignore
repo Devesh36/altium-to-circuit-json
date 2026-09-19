@@ -5,3 +5,4 @@ coverage
 artifacts
 .DS_Store
 tests/fixtures/downloaded
+tests/**/__snapshots__/*.diff.png
