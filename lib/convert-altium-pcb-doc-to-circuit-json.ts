@@ -18,6 +18,7 @@ import {
 import type {
   AnyCircuitElement,
   LayerRef,
+  NinePointAnchor,
   PCBKeepoutCircle,
   PcbBoard,
   PcbComponent,
@@ -53,7 +54,7 @@ const MILS_TO_MILLIMETERS = 0.0254
 const ALTIUM_SLOT_HOLE_TYPE = 2
 const BOARD_ID = "pcb_board_altium"
 const BOARD_GRAPHICS_COMPONENT_ID = "pcb_component_altium_board_graphics"
-const ALTIUM_TEXT_ANCHORS: readonly PcbSilkscreenText["anchor_alignment"][] = [
+const ALTIUM_TEXT_ANCHORS: readonly NinePointAnchor[] = [
   "top_left",
   "center_left",
   "bottom_left",
@@ -1014,9 +1015,7 @@ function componentId(index: number): string {
   return `pcb_component_altium_${index}`
 }
 
-function mapTextAnchor(
-  justification: string | undefined,
-): PcbSilkscreenText["anchor_alignment"] {
+function mapTextAnchor(justification: string | undefined): NinePointAnchor {
   const numericAnchor = ALTIUM_TEXT_ANCHORS[Number(justification) - 1]
   if (numericAnchor) return numericAnchor
 
@@ -1025,6 +1024,21 @@ function mapTextAnchor(
   if (normalized?.includes("RIGHT")) return "bottom_right"
   if (normalized?.includes("LEFT")) return "bottom_left"
   return "center"
+}
+
+function mapFabricationNoteTextAnchor(
+  justification: string | undefined,
+): PcbFabricationNoteText["anchor_alignment"] {
+  const anchor = mapTextAnchor(justification)
+  switch (anchor) {
+    case "top_left":
+    case "top_right":
+    case "bottom_left":
+    case "bottom_right":
+      return anchor
+    default:
+      return "center"
+  }
 }
 
 function isOverlayLayer(layer: string | undefined): boolean {
@@ -1217,7 +1231,6 @@ function convertFabricationNoteText(
     record.getDecoded("TEXT") ||
     record.text
   if (!record.position || !text) return undefined
-  const anchor_alignment = mapTextAnchor(record.justification)
   return {
     type: "pcb_fabrication_note_text",
     pcb_fabrication_note_text_id: `pcb_fabrication_note_text_altium_${index}`,
@@ -1226,9 +1239,7 @@ function convertFabricationNoteText(
     font: "tscircuit2024",
     font_size: milsToMillimeters(record.heightMils ?? 30),
     anchor_position: toMillimeterPoint(record.position),
-    anchor_alignment: (anchor_alignment === "bottom_center"
-      ? "center"
-      : anchor_alignment) as any,
+    anchor_alignment: mapFabricationNoteTextAnchor(record.justification),
     ccw_rotation: record.rotation,
     layer: "top",
   }

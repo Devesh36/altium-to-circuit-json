@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { parseAltiumPcbDoc } from "altiumts"
+import { any_circuit_element, type PcbFabricationNoteText } from "circuit-json"
 import { convertAltiumPcbDocToCircuitJson } from "../../lib"
 
 test("mechanical fills remain independent of silkscreen visibility", () => {
@@ -26,4 +27,34 @@ test("mechanical fills remain independent of silkscreen visibility", () => {
   expect(
     types({ includeSilkscreen: false, includeFabricationNotes: false }),
   ).toEqual([])
+})
+
+test("maps nine-point Altium text anchors to supported fabrication-note anchors", () => {
+  const textRecords = Array.from(
+    { length: 9 },
+    (_, index) =>
+      `|RECORD=Text|LAYER=MECHANICAL1|X=${index * 100}mil|Y=0mil|HEIGHT=30mil|JUSTIFICATION=${index + 1}|TEXT=${index + 1}`,
+  )
+  const document = parseAltiumPcbDoc(
+    ["|RECORD=Board|VERSION=5.0", ...textRecords].join("\n"),
+  )
+  const texts = convertAltiumPcbDocToCircuitJson(document).filter(
+    (element): element is PcbFabricationNoteText =>
+      element.type === "pcb_fabrication_note_text",
+  )
+
+  expect(texts.map((text) => text.anchor_alignment)).toEqual([
+    "top_left",
+    "center",
+    "bottom_left",
+    "center",
+    "center",
+    "center",
+    "top_right",
+    "center",
+    "bottom_right",
+  ])
+  expect(
+    texts.every((text) => any_circuit_element.safeParse(text).success),
+  ).toBe(true)
 })
