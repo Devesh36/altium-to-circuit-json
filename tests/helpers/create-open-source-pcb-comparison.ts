@@ -37,7 +37,7 @@ export async function createOpenSourcePcbComparison({
     )
   }
   const circuitJson = convertAltiumToCircuitJson(source, {
-    pcb: { includeFabricationNotes: false },
+    pcb: { includeFabricationNotes: true },
     sourceType: "pcb",
   })
   const board = circuitJson.find((element) => element.type === "pcb_board")
