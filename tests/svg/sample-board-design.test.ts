@@ -12,6 +12,7 @@ test(
     const source = await readReferenceText("sample-board-design.PcbDoc")
     const document = parseAltiumPcbDoc(source)
     const circuitJson = convertAltiumToCircuitJson(source, {
+      pcb: { includeFabricationNotes: false },
       sourceType: "pcb",
     })
 

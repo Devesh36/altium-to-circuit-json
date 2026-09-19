@@ -36,7 +36,10 @@ export async function createOpenSourcePcbComparison({
       `Expected ${filename} to contain an Altium PCB document, got ${document.type}`,
     )
   }
-  const circuitJson = convertAltiumToCircuitJson(source, { sourceType: "pcb" })
+  const circuitJson = convertAltiumToCircuitJson(source, {
+    pcb: { includeFabricationNotes: false },
+    sourceType: "pcb",
+  })
   const board = circuitJson.find((element) => element.type === "pcb_board")
   if (!board) throw new Error(`${filename} did not produce a PCB board`)
 
