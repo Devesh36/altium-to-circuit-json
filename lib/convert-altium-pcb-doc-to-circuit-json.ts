@@ -25,6 +25,7 @@ import type {
   PcbCourtyardOutline,
   PcbCutout,
   PcbFabricationNoteDimension,
+  PcbFabricationNotePath,
   PcbHole,
   PcbPlatedHole,
   PcbSilkscreenGraphic,
@@ -154,6 +155,15 @@ export function convertAltiumPcbDocToCircuitJson(
       continue
     }
 
+    if (
+      options.includeDimensions !== false &&
+      isExplodedDimensionGraphic(document, record)
+    ) {
+      const path = convertFabricationNotePath(record, index)
+      if (path) elements.push(path)
+      continue
+    }
+
     if (record instanceof AltiumPadRecord && options.includePads !== false) {
       const pad = convertPad(record, index)
       if (pad) elements.push(pad)
@@ -226,6 +236,54 @@ export function convertAltiumPcbDocToCircuitJson(
   }
 
   return elements
+}
+
+function isExplodedDimensionGraphic(
+  document: AltiumPcbDocument,
+  record: AltiumRecord,
+): record is AltiumTrackRecord | AltiumArcRecord {
+  if (
+    !(record instanceof AltiumTrackRecord) &&
+    !(record instanceof AltiumArcRecord)
+  ) {
+    return false
+  }
+  if (!isCourtyardLayer(getLayer(record))) return false
+
+  // EasyEDA exports dimensions as anonymous components made entirely from
+  // vector strokes on Mechanical 15 instead of native Altium Dimension
+  // records. Real component courtyards on this layer belong to top/bottom
+  // components, while these exploded dimension graphics have no PCB side.
+  return document.getComponentForRecord(record)?.side === "unknown"
+}
+
+function convertFabricationNotePath(
+  record: AltiumTrackRecord | AltiumArcRecord,
+  index: number,
+): PcbFabricationNotePath | undefined {
+  let route: AltiumPoint[]
+  if (record instanceof AltiumTrackRecord) {
+    if (!record.start || !record.end) return undefined
+    route = [record.start, record.end]
+  } else {
+    if (!record.center || !record.radiusMils) return undefined
+    route = approximateArc({
+      center: record.center,
+      radius: record.radiusMils,
+      startAngle: record.startAngle,
+      endAngle: record.endAngle,
+    })
+  }
+
+  return {
+    type: "pcb_fabrication_note_path",
+    pcb_fabrication_note_path_id: `pcb_fabrication_note_path_altium_${index}`,
+    pcb_component_id: pcbComponentIdForRecord(record),
+    layer: mapCourtyardLayer(getLayer(record)),
+    route: route.map(toMillimeterPoint),
+    stroke_width: milsToMillimeters(record.widthMils ?? 4),
+    color: "#ec4899",
+  }
 }
 
 function convertCircularKeepout({
