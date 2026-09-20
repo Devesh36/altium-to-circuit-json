@@ -36,13 +36,14 @@ test("resolves component designator and comment fields", () => {
   const texts = getFabricationNoteTexts(
     [
       "|RECORD=Component|ID=0|LAYER=BOTTOM|X=100mil|Y=100mil|SOURCEDESIGNATOR=U1|SOURCECOMMENT=Controller|NAMEON=TRUE|COMMENTON=TRUE",
-      "|RECORD=Text|COMPONENT=0|LAYER=MECHANICAL5|X=100mil|Y=100mil|HEIGHT=30mil|TEXT=.Designator",
-      "|RECORD=Text|COMPONENT=0|LAYER=MECHANICAL5|X=100mil|Y=150mil|HEIGHT=30mil|COMMENT=TRUE|TEXT=.Comment",
+      "|RECORD=Text|COMPONENT=0|LAYER=MECHANICAL5|X=100mil|Y=100mil|HEIGHT=30mil|ROTATION=90|TEXT=.Designator",
+      "|RECORD=Text|COMPONENT=0|LAYER=MECHANICAL5|X=100mil|Y=150mil|HEIGHT=30mil|ROTATION=180|COMMENT=TRUE|TEXT=.Comment",
     ].join("\n"),
   )
 
   expect(texts.map(({ text }) => text)).toEqual(["U1", "Controller"])
   expect(texts.map(({ layer }) => layer)).toEqual(["bottom", "bottom"])
+  expect(texts.map(({ ccw_rotation }) => ccw_rotation)).toEqual([90, 180])
   expect(texts.map(({ pcb_component_id }) => pcb_component_id)).toEqual([
     "pcb_component_altium_0",
     "pcb_component_altium_0",

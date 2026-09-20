@@ -53,7 +53,6 @@ import { stitchConnectedAltiumPaths } from "./pcb/stitch-connected-paths"
 
 const MILS_TO_MILLIMETERS = 0.0254
 const ALTIUM_SLOT_HOLE_TYPE = 2
-const ALTIUM_MECHANICAL_LAYER_ID_BASE = 16908288
 const BOARD_ID = "pcb_board_altium"
 const BOARD_GRAPHICS_COMPONENT_ID = "pcb_component_altium_board_graphics"
 const ALTIUM_TEXT_ANCHORS: readonly NinePointAnchor[] = [
@@ -1125,14 +1124,21 @@ function convertFabricationNoteText({
     return undefined
   }
 
-  const text = isDesignator
-    ? (component?.designator ?? sourceText)
-    : isComment
-      ? (component?.comment ?? sourceText)
-      : sourceText
+  let text = sourceText
+  if (isDesignator && component?.designator) {
+    text = component.designator
+  } else if (isComment && component?.comment) {
+    text = component.comment
+  }
   const componentIndex = component
     ? document.components.indexOf(component)
     : undefined
+  const componentSide = component?.side
+  let layer: "top" | "bottom" = record.mirrored ? "bottom" : "top"
+  layer = mechanicalLayerSides.get(normalizeLayer(record.layer)) ?? layer
+  if (componentSide === "top" || componentSide === "bottom") {
+    layer = componentSide
+  }
 
   return {
     type: "pcb_fabrication_note_text",
@@ -1147,11 +1153,7 @@ function convertFabricationNoteText({
     anchor_position: toMillimeterPoint(position),
     anchor_alignment: mapFabricationTextAnchor(record.justification),
     ccw_rotation: record.rotation,
-    layer:
-      component?.side === "top" || component?.side === "bottom"
-        ? component.side
-        : (mechanicalLayerSides.get(normalizeLayer(record.layer)) ??
-          (record.mirrored ? "bottom" : "top")),
+    layer,
     color: "#ec4899",
   }
 }
@@ -1186,8 +1188,13 @@ function getMechanicalLayerSides(
   if (!document.board) return sides
 
   for (const entry of getPcbLayerStack(document.board).entries) {
-    const layerNumber = Number(entry.layerId) - ALTIUM_MECHANICAL_LAYER_ID_BASE
-    if (!Number.isInteger(layerNumber) || layerNumber < 1 || layerNumber > 32) {
+    const layerId = Number(entry.layerId)
+    if (!Number.isSafeInteger(layerId)) continue
+
+    // Stack IDs encode the layer family and number in separate 16-bit halves.
+    const layerFamily = Math.floor(layerId / 0x10000)
+    const layerNumber = layerId % 0x10000
+    if (layerFamily !== 0x102 || layerNumber < 1 || layerNumber > 32) {
       continue
     }
     const normalizedName = normalizeLayer(entry.name)
