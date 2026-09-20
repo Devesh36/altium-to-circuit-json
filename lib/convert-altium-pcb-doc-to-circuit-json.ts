@@ -785,8 +785,43 @@ function convertPad(
   const holeDiameter = milsToMillimeters(record.holeSizeMils ?? 0)
   const shape = normalizeShape(geometry.shape)
   const id = `altium_${index}`
+  const slotLengthMils = getMeasurement(record, "SLOTLENGTH")
+  const holeWidthMils = record.holeWidthMils ?? record.holeSizeMils
+  const isSlot =
+    record.getNumber("HOLETYPE") === ALTIUM_SLOT_HOLE_TYPE ||
+    normalizeShape(record.holeType).includes("SLOT") ||
+    (slotLengthMils ?? 0) > (record.holeSizeMils ?? 0) ||
+    (holeWidthMils ?? 0) > (record.holeSizeMils ?? 0)
 
   if (record.plated === false && holeDiameter > 0) {
+    if (isSlot) {
+      const slotHoleSize = getAltiumSlotHoleSize(record)
+      const holeWidth = milsToMillimeters(slotHoleSize.widthMils)
+      const holeHeight = milsToMillimeters(slotHoleSize.heightMils)
+      const { ccwRotationDegrees } = getAltiumPadHoleGeometry(record)
+
+      return ccwRotationDegrees === 0
+        ? {
+            type: "pcb_hole",
+            pcb_hole_id: `pcb_hole_${id}`,
+            hole_shape: "pill",
+            hole_width: holeWidth,
+            hole_height: holeHeight,
+            x,
+            y,
+          }
+        : {
+            type: "pcb_hole",
+            pcb_hole_id: `pcb_hole_${id}`,
+            hole_shape: "rotated_pill",
+            hole_width: holeWidth,
+            hole_height: holeHeight,
+            ccw_rotation: ccwRotationDegrees,
+            x,
+            y,
+          }
+    }
+
     return {
       type: "pcb_hole",
       pcb_hole_id: `pcb_hole_${id}`,
@@ -801,13 +836,6 @@ function convertPad(
     const holeGeometry = getAltiumPadHoleGeometry(record)
     const holeOffsetX = milsToMillimeters(holeGeometry.offsetXMils)
     const holeOffsetY = milsToMillimeters(holeGeometry.offsetYMils)
-    const slotLengthMils = getMeasurement(record, "SLOTLENGTH")
-    const holeWidthMils = record.holeWidthMils ?? record.holeSizeMils
-    const isSlot =
-      record.getNumber("HOLETYPE") === ALTIUM_SLOT_HOLE_TYPE ||
-      normalizeShape(record.holeType).includes("SLOT") ||
-      (slotLengthMils ?? 0) > (record.holeSizeMils ?? 0) ||
-      (holeWidthMils ?? 0) > (record.holeSizeMils ?? 0)
     const layers: LayerRef[] = ["top", "bottom"]
 
     if (isSlot) {
