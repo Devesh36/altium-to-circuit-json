@@ -381,7 +381,14 @@ function getDimensionText(
   measuredDistanceMils: number,
 ): string {
   const explicitText = record.getDecoded("TEXTFORMAT")?.trim()
-  if (explicitText && explicitText !== "<>") return explicitText
+  // Some files put a text-gap measurement (for example, "10mil") in
+  // TEXTFORMAT. It is not the dimension value, so derive the measured label.
+  const isMeasurementShapedFormat =
+    explicitText !== undefined &&
+    parseAltiumMeasurementToMils(explicitText) !== undefined
+  if (explicitText && explicitText !== "<>" && !isMeasurementShapedFormat) {
+    return explicitText
+  }
 
   const precision = Math.min(Math.max(record.precision ?? 2, 0), 6)
   const normalizedUnit = record.unit?.toUpperCase() ?? "MILS"
