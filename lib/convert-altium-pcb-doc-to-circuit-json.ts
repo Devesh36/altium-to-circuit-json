@@ -561,14 +561,7 @@ function createBoard(document: AltiumPcbDocument): PcbBoard {
     getAltiumBounds(altiumOutline) ?? getFallbackPcbBounds(document.records)
   const width = Math.max(milsToMillimeters(bounds.maxX - bounds.minX), 0.1)
   const height = Math.max(milsToMillimeters(bounds.maxY - bounds.minY), 0.1)
-  const numLayers = document.board
-    ? Math.max(
-        getPcbLayerStack(document.board).entries.filter((entry) =>
-          Boolean(mapAltiumCopperLayer(entry.name ?? entry.layerId)),
-        ).length,
-        2,
-      )
-    : 2
+  const numLayers = getBoardLayerCount(document)
 
   return {
     type: "pcb_board",
@@ -584,6 +577,25 @@ function createBoard(document: AltiumPcbDocument): PcbBoard {
     num_layers: numLayers,
     material: "fr4",
   }
+}
+
+function getBoardLayerCount(document: AltiumPcbDocument): number {
+  if (!document.board) return 2
+
+  const entries = getPcbLayerStack(document.board).entries
+  const modernCopperLayerCount = entries.filter(
+    (entry) => entry.source === "v8" && entry.copperThickness !== undefined,
+  ).length
+  if (modernCopperLayerCount > 0) {
+    return Math.max(modernCopperLayerCount, 2)
+  }
+
+  return Math.max(
+    entries.filter((entry) =>
+      Boolean(mapAltiumCopperLayer(entry.name ?? entry.layerId)),
+    ).length,
+    2,
+  )
 }
 
 function getFallbackPcbBounds(records: AltiumRecord[]): {
