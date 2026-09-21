@@ -404,7 +404,8 @@ function getDimensionText(
     amount /= 1000
     unitLabel = "in"
   }
-  return `${record.prefix ?? ""}${amount.toFixed(precision)}${record.suffix ?? ` ${unitLabel}`}`
+  const suffix = record.suffix?.trim() ? record.suffix : ` ${unitLabel}`
+  return `${record.prefix ?? ""}${amount.toFixed(precision)}${suffix}`
 }
 
 function mapMechanicalLayer(layer: string | undefined): "top" | "bottom" {
