@@ -227,6 +227,7 @@ export function convertAltiumPcbDocToCircuitJson(
       }
       if (isOverlayLayer(record.layer)) {
         if (options.includeSilkscreen === false) continue
+        if (isHiddenComponentText(document, record)) continue
         const text = convertSilkscreenText(record, index)
         if (text) elements.push(text)
       } else {
@@ -1121,6 +1122,21 @@ function convertSilkscreenText(
     layer: mapOverlayLayer(record.layer),
     is_mirrored: record.mirrored,
   }
+}
+
+function isHiddenComponentText(
+  document: AltiumPcbDocument,
+  record: AltiumTextRecord,
+): boolean {
+  const component = document.getComponentForRecord(record)
+  if (!component) return false
+
+  return (
+    (record.getBoolean("DESIGNATOR") === true &&
+      component.getBoolean("NAMEON") === false) ||
+    (record.getBoolean("COMMENT") === true &&
+      component.getBoolean("COMMENTON") === false)
+  )
 }
 
 function convertMechanicalText({
