@@ -3,6 +3,7 @@ import type { PcbBoard } from "circuit-json"
 import { milsToMillimeters, toMillimeterPoint } from "../geometry"
 import { BOARD_ID } from "../model"
 import { getBoardLayerCount } from "./getBoardLayerCount"
+import { getBoardThickness } from "./getBoardThickness"
 import { getFallbackPcbBounds } from "./getFallbackPcbBounds"
 import { getPreferredPcbBoardOutline } from "./getPreferredPcbBoardOutline"
 
@@ -24,7 +25,7 @@ export function createBoard(document: AltiumPcbDocument): PcbBoard {
     width,
     height,
     ...(outline.length >= 3 ? { shape: "polygon" as const, outline } : {}),
-    thickness: 1.6,
+    thickness: getBoardThickness(document),
     num_layers: getBoardLayerCount(document),
     material: "fr4",
   }
