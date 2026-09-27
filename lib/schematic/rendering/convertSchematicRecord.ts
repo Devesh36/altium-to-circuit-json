@@ -1,4 +1,4 @@
-import type { AltiumRecord } from "altiumts"
+import { type AltiumRecord, AltiumSchImageRecord } from "altiumts"
 import type { AnyCircuitElement, SchematicCircle } from "circuit-json"
 import type { ConvertAltiumSchDocOptions } from "../../api"
 import { SCHEMATIC_SHEET_ID, type SchematicContext } from "../document"
@@ -8,6 +8,7 @@ import { renderHierarchicalPort } from "./renderHierarchicalPort"
 import { renderPin } from "./renderPin"
 import { renderPowerPort } from "./renderPowerPort"
 import { renderPrimitiveRecord } from "./renderPrimitiveRecord"
+import { renderSchematicImageRecord } from "./renderSchematicImageRecord"
 
 export function convertSchematicRecord(
   {
@@ -28,6 +29,10 @@ export function convertSchematicRecord(
     scaleLength(Number(record.getCaseInsensitive("LINEWIDTH") ?? 1), scale),
     0.05,
   )
+
+  if (record instanceof AltiumSchImageRecord) {
+    return renderSchematicImageRecord({ context, index, record })
+  }
 
   const primitive = renderPrimitiveRecord({
     record,

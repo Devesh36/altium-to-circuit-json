@@ -27,5 +27,9 @@ export function expectValidImportedSchematic({
   expect(circuitJsonSvg).toContain('data-circuit-json-type="schematic_sheet"')
   expect(circuitJsonSvg).not.toContain("Could not match ports")
   expect(circuitJsonSvg).not.toContain("Symbol not found")
-  expect(circuitJsonSvg).not.toContain("NaN")
+  const svgWithoutDataUris = circuitJsonSvg.replace(
+    /\b(?:href|src)="data:[^"]*"/gu,
+    "",
+  )
+  expect(svgWithoutDataUris).not.toContain("NaN")
 }
