@@ -8,6 +8,7 @@ import {
 import { getLocation, scaleLength, scalePoint } from "../geometry"
 import { uniqueStrings } from "../identifiers"
 import type { ConvertedPort, SemanticSchematicOptions } from "../model"
+import { parseAltiumPinLabel } from "./parseAltiumPinLabel"
 import { parsePinNumber } from "./parsePinNumber"
 
 export function convertComponentPin({
@@ -41,6 +42,7 @@ export function convertComponentPin({
   const designator = pin.designator ?? `${pinIndex + 1}`
   const pinNumber = parsePinNumber(designator)
   const name = pin.name ?? designator
+  const parsedPinLabel = parseAltiumPinLabel(name)
   const sourcePortId = `source_port_altium_${recordIndex}`
   const schematicPortId = `schematic_port_altium_${recordIndex}`
   const sourcePort: SourcePort = {
@@ -66,7 +68,14 @@ export function convertComponentPin({
   const schematicPort: SchematicPort = {
     type: "schematic_port",
     center: scalePoint(terminalPoint, options.scale),
-    ...(showName && name ? { display_pin_label: name } : {}),
+    ...(showName && name
+      ? {
+          display_pin_label: parsedPinLabel.displayText,
+          ...(parsedPinLabel.textParts
+            ? { display_pin_label_text_parts: parsedPinLabel.textParts }
+            : {}),
+        }
+      : {}),
     distance_from_component_edge: scaleLength(pinLength, options.scale),
     facing_direction: direction,
     is_connected: false,

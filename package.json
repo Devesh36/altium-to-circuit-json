@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "altiumts": "github:tscircuit/altiumts#2010669c4e94819de68620b537ff9382d8f472f7",
-    "circuit-json": "^0.0.479",
+    "circuit-json": "0.0.486",
     "format-si-unit": "^0.0.11",
     "schematic-symbols": "^0.0.238",
     "transformation-matrix": "^2.16.1"
@@ -64,7 +64,7 @@
     "bun-match-svg": "^0.0.15",
     "circuit-json-to-connectivity-map": "^0.0.25",
     "circuit-to-svg": "^0.0.394",
-    "circuit-to-svg-schematic-graphics": "npm:circuit-to-svg@0.0.410",
+    "circuit-to-svg-schematic-graphics": "npm:circuit-to-svg@0.0.415",
     "sharp": "^0.35.3",
     "stack-svgs": "^0.0.1",
     "tsup": "^8.5.1",
