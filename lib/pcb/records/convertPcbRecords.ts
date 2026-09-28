@@ -52,14 +52,12 @@ export function convertPcbRecords(context: PcbConversionContext): void {
       }
       continue
     }
-
     if (record instanceof AltiumDimensionRecord) {
       if (options.includeDimensions === false) continue
       const dimension = convertPcbDimension({ record, recordIndex })
       if (dimension) elements.push(dimension)
       continue
     }
-
     if (
       options.includeDimensions !== false &&
       isExplodedPcbDimensionGraphic(document, record)
