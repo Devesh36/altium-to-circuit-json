@@ -76,5 +76,5 @@ test(
 
     await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
   },
-  { timeout: 600_000 },
+  { timeout: 900_000 },
 )

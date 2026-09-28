@@ -40,15 +40,16 @@ export function convertPcbRecords(context: PcbConversionContext): void {
   for (const [recordIndex, record] of document.records.entries()) {
     if (
       record instanceof AltiumArcRecord &&
-      isKeepoutLayer(record.layer) &&
-      options.includeKeepouts !== false
+      (isKeepoutLayer(record.layer) || record.getBoolean("KEEPOUT") === true)
     ) {
-      const keepout = convertPcbCircularKeepout({
-        layerMap,
-        record,
-        recordIndex,
-      })
-      if (keepout) elements.push(keepout)
+      if (options.includeKeepouts !== false) {
+        const keepouts = convertPcbCircularKeepout({
+          layerMap,
+          record,
+          recordIndex,
+        })
+        elements.push(...keepouts)
+      }
       continue
     }
 

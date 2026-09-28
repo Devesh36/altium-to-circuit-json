@@ -12,18 +12,22 @@ const circularKeepoutPcbDoc = parseAltiumPcbDoc(
   ].join("\n"),
 )
 
-test("imports full-circle Altium keepout arcs", async () => {
+test("preserves an annular keepout without filling its center", async () => {
   const circuitJson = convertAltiumPcbDocToCircuitJson(circularKeepoutPcbDoc)
-  const keepout = circuitJson.find(
+  const keepouts = circuitJson.filter(
     (element): element is PCBKeepoutCircle => element.type === "pcb_keepout",
   )
 
-  expect(keepout).toMatchObject({
-    shape: "circle",
-    center: { x: 6.35, y: 6.35 },
-    radius: 2.159,
-    layers: ["top", "bottom"],
-  })
+  expect(keepouts.length).toBeGreaterThan(8)
+  expect(
+    keepouts.every(
+      (keepout) =>
+        keepout.shape === "circle" &&
+        keepout.layers.join() === "top,bottom" &&
+        Math.hypot(keepout.center.x - 6.35, keepout.center.y - 6.35) >
+          keepout.radius,
+    ),
+  ).toBe(true)
   expect(
     convertAltiumPcbDocToCircuitJson(circularKeepoutPcbDoc, {
       includeKeepouts: false,
@@ -36,4 +40,39 @@ test("imports full-circle Altium keepout arcs", async () => {
     label: "Circular PCB keepout",
   })
   await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
+})
+
+test("uses each full-circle keepout's copper layer and skips keepouts when disabled", () => {
+  const document = parseAltiumPcbDoc(
+    [
+      "|RECORD=Board|SHEETWIDTH=500mil|SHEETHEIGHT=500mil",
+      "|RECORD=Arc|LAYER=TOP|KEEPOUT=TRUE|LOCATION.X=100mil|LOCATION.Y=250mil|RADIUS=80mil|STARTANGLE=0|ENDANGLE=360|WIDTH=30mil",
+      "|RECORD=Arc|LAYER=BOTTOM|KEEPOUT=TRUE|LOCATION.X=250mil|LOCATION.Y=250mil|RADIUS=20mil|STARTANGLE=0|ENDANGLE=360|WIDTH=50mil",
+      "|RECORD=Arc|LAYER=TOP|LOCATION.X=400mil|LOCATION.Y=250mil|RADIUS=40mil|STARTANGLE=0|ENDANGLE=360|WIDTH=20mil",
+    ].join("\n"),
+  )
+
+  const circuitJson = convertAltiumPcbDocToCircuitJson(document)
+  const keepouts = circuitJson.filter(
+    (element): element is PCBKeepoutCircle => element.type === "pcb_keepout",
+  )
+  expect(
+    keepouts.filter((keepout) => keepout.layers[0] === "top").length,
+  ).toBeGreaterThan(1)
+  expect(
+    keepouts.filter((keepout) => keepout.layers[0] === "bottom"),
+  ).toHaveLength(1)
+  expect(
+    circuitJson.filter((element) => element.type === "pcb_trace"),
+  ).toHaveLength(1)
+
+  const withoutKeepouts = convertAltiumPcbDocToCircuitJson(document, {
+    includeKeepouts: false,
+  })
+  expect(
+    withoutKeepouts.filter((element) => element.type === "pcb_keepout"),
+  ).toHaveLength(0)
+  expect(
+    withoutKeepouts.filter((element) => element.type === "pcb_trace"),
+  ).toHaveLength(1)
 })

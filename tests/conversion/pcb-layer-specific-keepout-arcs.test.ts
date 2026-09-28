@@ -12,7 +12,7 @@ const document = parseAltiumPcbDoc(
   ].join("\n"),
 )
 
-test("snapshot: top-layer keepout arc is rendered as copper", async () => {
+test("snapshot: top-layer annular keepout stays out of copper", async () => {
   const circuitJson = convertAltiumPcbDocToCircuitJson(document)
   const comparisonSvg = stackAltiumAndCircuitJsonSvgs({
     altiumSvg: serializeAltiumPcbToSvg(document, {
@@ -28,12 +28,12 @@ test("snapshot: top-layer keepout arc is rendered as copper", async () => {
       viewport: getPcbBoardViewport(circuitJson),
       matchBoardAspectRatio: true,
     }),
-    label: "Top-layer keepout arc converted as copper",
+    label: "Top-layer annular keepout",
   })
   await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
 })
 
-test.failing("keeps the arc out of copper and leaves its center clear", () => {
+test("keeps the arc out of copper and leaves its center clear", () => {
   const circuitJson = convertAltiumPcbDocToCircuitJson(document)
   const keepouts = circuitJson.filter(
     (element) => element.type === "pcb_keepout",
