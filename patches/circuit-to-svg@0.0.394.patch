@@ -1,11 +1,42 @@
 diff --git a/dist/index.js b/dist/index.js
-index e553bc388e296fc53e24d1ecd23534d0824d51d9..5a9063b09415e38830e4ad1cb33eb2bea17ab988 100644
+index e553bc388e296fc53e24d1ecd23534d0824d51d9..26140fb5d17c972b24acc2a42a7bffb4f9eddaa0 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -6507,6 +6507,43 @@ function createSvgObjectsFromPcbKeepout(keepout, ctx) {
+@@ -6507,6 +6507,74 @@ function createSvgObjectsFromPcbKeepout(keepout, ctx) {
            value: ""
          }
        );
++    } else if (keepout.shape === "ring") {
++      const [cx, cy] = applyToPoint39(transform, [keepout.center.x, keepout.center.y]);
++      const outerRadius = keepout.outer_radius * Math.abs(transform.a);
++      const innerRadius = keepout.inner_radius * Math.abs(transform.a);
++      const circlePath = (radius) => `M ${cx + radius} ${cy} A ${radius} ${radius} 0 1 0 ${cx - radius} ${cy} A ${radius} ${radius} 0 1 0 ${cx + radius} ${cy} Z`;
++      const d = `${circlePath(outerRadius)} ${circlePath(innerRadius)}`;
++      svgObjects.push(
++        {
++          name: "path",
++          type: "element",
++          attributes: {
++            ...createKeepoutBaseAttributes(keepout.pcb_keepout_id, layer, "pcb-keepout-ring", keepout.description),
++            d,
++            "fill-rule": "evenodd",
++            fill: KEEPOUT_BACKGROUND_COLOR
++          },
++          children: [],
++          value: ""
++        },
++        {
++          name: "path",
++          type: "element",
++          attributes: {
++            ...createKeepoutPatternAttributes(keepout.pcb_keepout_id, layer, "pcb-keepout-ring", keepout.description),
++            d,
++            "fill-rule": "evenodd"
++          },
++          children: [],
++          value: ""
++        }
++      );
 +    } else if (keepout.shape === "outline") {
 +      const path = keepout.outline.map((point, index) => {
 +        const [x, y] = applyToPoint39(transform, [point.x, point.y]);

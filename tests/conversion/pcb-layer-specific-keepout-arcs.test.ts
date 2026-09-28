@@ -44,15 +44,10 @@ test("keeps the arc out of copper and leaves its center clear", () => {
   ).toHaveLength(0)
   expect(keepouts).toHaveLength(1)
   const keepout = keepouts[0]
-  if (keepout?.shape !== "outline") {
-    throw new Error("Expected outline keepout")
+  if (keepout?.shape !== "ring") {
+    throw new Error("Expected ring keepout")
   }
   expect(keepout.layers).toEqual(["top"])
-  expect(keepout.outline.at(-1)).toEqual(keepout.outline[0])
-  expect(
-    keepout.outline.every(
-      (point) =>
-        Math.hypot(point.x - 6.35, point.y - 6.35) > keepout.stroke_width / 2,
-    ),
-  ).toBe(true)
+  expect(keepout.inner_radius).toBeCloseTo(1.651)
+  expect(keepout.outer_radius).toBeCloseTo(2.413)
 })

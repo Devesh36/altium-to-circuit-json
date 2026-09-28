@@ -37,30 +37,14 @@ export function convertPcbCircularKeepout({
       },
     ]
   }
-  // Sample the centerline closely enough that its chord error stays below
-  // one sixteenth of the stroke radius. Repeating the first point closes it.
-  const maxChordError = strokeRadius / 16
-  const count = Math.max(
-    32,
-    Math.ceil(Math.PI / Math.acos(1 - maxChordError / centerlineRadius)),
-  )
-  const outline = Array.from({ length: count }, (_, index) => {
-    const angle = (2 * Math.PI * index) / count
-    return {
-      x: centerPoint.x + centerlineRadius * Math.cos(angle),
-      y: centerPoint.y + centerlineRadius * Math.sin(angle),
-    }
-  })
-  const firstPoint = outline[0]
-  if (!firstPoint) return []
-  outline.push(firstPoint)
   return [
     {
       type: "pcb_keepout",
       pcb_keepout_id: id,
-      shape: "outline",
-      outline,
-      stroke_width: 2 * strokeRadius,
+      shape: "ring",
+      center: centerPoint,
+      inner_radius: centerlineRadius - strokeRadius,
+      outer_radius: centerlineRadius + strokeRadius,
       layers,
       description: "Altium annular arc keepout",
     },

@@ -82,6 +82,7 @@
     "sharp": "^0.35.3"
   },
   "patchedDependencies": {
+    "circuit-json@0.0.486": "patches/circuit-json@0.0.486.patch",
     "circuit-to-svg@0.0.394": "patches/circuit-to-svg@0.0.394.patch"
   }
 }

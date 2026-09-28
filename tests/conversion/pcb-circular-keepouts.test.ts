@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import { parseAltiumPcbDoc, serializeAltiumPcbToSvg } from "altiumts"
-import type { PCBKeepout } from "circuit-json"
+import { any_circuit_element, type PCBKeepout } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { convertAltiumPcbDocToCircuitJson } from "../../lib"
 import { stackAltiumAndCircuitJsonSvgs } from "../helpers/stack-svg-comparison"
@@ -20,18 +20,13 @@ test("preserves an annular keepout without filling its center", async () => {
 
   expect(keepouts).toHaveLength(1)
   const keepout = keepouts[0]
-  if (keepout?.shape !== "outline") {
-    throw new Error("Expected outline keepout")
+  if (keepout?.shape !== "ring") {
+    throw new Error("Expected ring keepout")
   }
   expect(keepout.layers).toEqual(["top", "bottom"])
-  expect(keepout.stroke_width).toBeCloseTo(0.508)
-  expect(keepout.outline.length).toBeGreaterThan(32)
-  expect(keepout.outline.at(-1)).toEqual(keepout.outline[0])
-  expect(
-    keepout.outline.every(
-      (point) => Math.hypot(point.x - 6.35, point.y - 6.35) > 0.254,
-    ),
-  ).toBe(true)
+  expect(keepout.inner_radius).toBeCloseTo(1.651)
+  expect(keepout.outer_radius).toBeCloseTo(2.159)
+  expect(any_circuit_element.safeParse(keepout).success).toBe(true)
   expect(
     convertAltiumPcbDocToCircuitJson(circularKeepoutPcbDoc, {
       includeKeepouts: false,
@@ -64,7 +59,7 @@ test("uses each full-circle keepout's copper layer and skips keepouts when disab
     keepouts.filter((keepout) => keepout.layers[0] === "top"),
   ).toHaveLength(1)
   expect(keepouts.find((keepout) => keepout.layers[0] === "top")?.shape).toBe(
-    "outline",
+    "ring",
   )
   expect(
     keepouts.filter((keepout) => keepout.layers[0] === "bottom"),
@@ -84,7 +79,7 @@ test("uses each full-circle keepout's copper layer and skips keepouts when disab
   ).toHaveLength(1)
 })
 
-test("represents a thin TI-style circular keepout with one polygonal outline", () => {
+test("represents a thin TI-style circular keepout with one ring", () => {
   const document = parseAltiumPcbDoc(
     [
       "|RECORD=Board|SHEETWIDTH=500mil|SHEETHEIGHT=500mil",
@@ -97,11 +92,9 @@ test("represents a thin TI-style circular keepout with one polygonal outline", (
 
   expect(keepouts).toHaveLength(1)
   const keepout = keepouts[0]
-  if (keepout?.shape !== "outline") {
-    throw new Error("Expected outline keepout")
+  if (keepout?.shape !== "ring") {
+    throw new Error("Expected ring keepout")
   }
-  expect(keepout.stroke_width).toBeCloseTo(0.0254)
-  expect(keepout.outline.length).toBeGreaterThan(64)
-  expect(keepout.outline.length).toBeLessThan(200)
-  expect(keepout.outline.at(-1)).toEqual(keepout.outline[0])
+  expect(keepout.inner_radius).toBeCloseTo(2.6035)
+  expect(keepout.outer_radius).toBeCloseTo(2.6289)
 })
