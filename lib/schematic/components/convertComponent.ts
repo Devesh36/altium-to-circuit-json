@@ -11,6 +11,7 @@ import {
 } from "../symbols"
 import { addComponentFallbackText } from "./addComponentFallbackText"
 import { convertComponentPin } from "./convertComponentPin"
+import { createAlphanumericPinDesignatorText } from "./createAlphanumericPinDesignatorText"
 import { createSourceComponent } from "./createSourceComponent"
 import { getComponentBodyBounds } from "./getComponentBodyBounds"
 import { getComponentIdentity } from "./getComponentIdentity"
@@ -108,6 +109,20 @@ export function convertComponent(
   if (symbolSelection) {
     applyNativeSymbolPortGeometry({ center, selection: symbolSelection })
   }
+  const pinDesignatorTexts = componentPorts.flatMap(
+    ({ isSchematicVisible, schematicPort }, pinIndex) => {
+      if (!isSchematicVisible) return []
+      const pin = pins[pinIndex]
+      if (!pin) return []
+      const pinDesignatorText = createAlphanumericPinDesignatorText({
+        pin,
+        recordIndex: document.records.indexOf(pin),
+        scale: options.scale,
+        schematicPort,
+      })
+      return pinDesignatorText ? [pinDesignatorText] : []
+    },
+  )
   convertedPorts.push(...componentPorts)
   elements.push(
     ...componentPorts.flatMap(
@@ -116,6 +131,7 @@ export function convertComponent(
         ...(isSchematicVisible ? [schematicPort] : []),
       ],
     ),
+    ...pinDesignatorTexts,
   )
   const schematicComponent: SchematicComponent = {
     type: "schematic_component",
