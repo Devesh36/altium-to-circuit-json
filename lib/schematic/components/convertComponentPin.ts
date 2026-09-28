@@ -85,6 +85,9 @@ export function convertComponentPin({
     side_of_component: directionToSide(direction),
     source_port_id: sourcePortId,
     true_ccw_index: pinIndex,
+    ...(pin.getNumber("SYMBOL_OUTEREDGE") === 1
+      ? { is_drawn_with_inversion_circle: true }
+      : {}),
     ...(pinNumber === undefined ? {} : { pin_number: pinNumber }),
     ...(electricalType === 0 || electricalType === 1
       ? { has_input_arrow: true }
