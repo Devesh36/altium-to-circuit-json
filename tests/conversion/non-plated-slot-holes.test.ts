@@ -13,7 +13,7 @@ const document = parseAltiumPcbDoc(
   ].join("\n"),
 )
 
-test("snapshot: non-plated slots become circles", async () => {
+test("snapshot: non-plated slots retain their shape", async () => {
   const circuitJson = convertAltiumPcbDocToCircuitJson(document)
   const comparisonSvg = stackAltiumAndCircuitJsonSvgs({
     altiumSvg: serializeAltiumPcbToSvg(document),
@@ -23,7 +23,7 @@ test("snapshot: non-plated slots become circles", async () => {
   await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
 })
 
-test.failing("preserves non-plated slot size and rotation", () => {
+test("preserves non-plated slot size and rotation", () => {
   const holes = convertAltiumPcbDocToCircuitJson(document).filter(
     (element) => element.type === "pcb_hole",
   )

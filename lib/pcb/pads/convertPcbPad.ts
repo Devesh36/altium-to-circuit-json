@@ -1,8 +1,13 @@
-import { type AltiumPadRecord, getAltiumPcbPadGeometry } from "altiumts"
+import {
+  type AltiumPadRecord,
+  getAltiumPcbPadGeometry,
+  normalizeAltiumAngle,
+} from "altiumts"
 import type { PcbHole, PcbPlatedHole, PcbSmtPad } from "circuit-json"
 import { createOctagonPoints, milsToMillimeters } from "../geometry"
 import type { PcbCopperLayerMap } from "../layers"
 import { convertThroughHolePad } from "./convertThroughHolePad"
+import { isSlottedThroughHolePad } from "./isSlottedThroughHolePad"
 import { normalizeShape } from "./normalizeShape"
 
 export function convertPcbPad({
@@ -33,6 +38,29 @@ export function convertPcbPad({
   const id = `altium_${recordIndex}`
 
   if (!geometry.plated && holeDiameter > 0) {
+    if (isSlottedThroughHolePad({ geometry, record })) {
+      const holeWidth = milsToMillimeters(
+        Math.max(geometry.slotLengthMils, geometry.holeSizeMils),
+      )
+      const ccwRotation = normalizeAltiumAngle(
+        geometry.ccwRotationDegrees + geometry.holeCcwRotationDegrees,
+      )
+      const slot = {
+        type: "pcb_hole" as const,
+        pcb_hole_id: `pcb_hole_${id}`,
+        hole_width: holeWidth,
+        hole_height: holeDiameter,
+        x,
+        y,
+      }
+      return ccwRotation === 0
+        ? { ...slot, hole_shape: "pill" }
+        : {
+            ...slot,
+            hole_shape: "rotated_pill",
+            ccw_rotation: ccwRotation,
+          }
+    }
     return {
       type: "pcb_hole",
       pcb_hole_id: `pcb_hole_${id}`,
