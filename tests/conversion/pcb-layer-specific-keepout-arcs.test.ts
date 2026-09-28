@@ -42,13 +42,17 @@ test("keeps the arc out of copper and leaves its center clear", () => {
   expect(
     circuitJson.filter((element) => element.type === "pcb_trace"),
   ).toHaveLength(0)
-  expect(keepouts.length).toBeGreaterThan(0)
+  expect(keepouts).toHaveLength(1)
+  const keepout = keepouts[0]
+  if (keepout?.shape !== "outline") {
+    throw new Error("Expected outline keepout")
+  }
+  expect(keepout.layers).toEqual(["top"])
+  expect(keepout.outline.at(-1)).toEqual(keepout.outline[0])
   expect(
-    keepouts.every(
-      (keepout) =>
-        keepout.shape === "circle" &&
-        Math.hypot(keepout.center.x - 6.35, keepout.center.y - 6.35) >
-          keepout.radius,
+    keepout.outline.every(
+      (point) =>
+        Math.hypot(point.x - 6.35, point.y - 6.35) > keepout.stroke_width / 2,
     ),
   ).toBe(true)
 })

@@ -1,0 +1,48 @@
+diff --git a/dist/index.js b/dist/index.js
+index e553bc388e296fc53e24d1ecd23534d0824d51d9..5a9063b09415e38830e4ad1cb33eb2bea17ab988 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -6507,6 +6507,43 @@ function createSvgObjectsFromPcbKeepout(keepout, ctx) {
+           value: ""
+         }
+       );
++    } else if (keepout.shape === "outline") {
++      const path = keepout.outline.map((point, index) => {
++        const [x, y] = applyToPoint39(transform, [point.x, point.y]);
++        return `${index === 0 ? "M" : "L"} ${x} ${y}`;
++      }).join(" ");
++      const d = `${path} Z`;
++      const strokeWidth = (keepout.stroke_width * Math.abs(transform.a)).toString();
++      const baseAttributes = {
++        ...createKeepoutBaseAttributes(
++          keepout.pcb_keepout_id,
++          layer,
++          "pcb-keepout-outline",
++          keepout.description
++        ),
++        d,
++        fill: "none",
++        stroke: KEEPOUT_BACKGROUND_COLOR,
++        "stroke-width": strokeWidth,
++        "stroke-linejoin": "round"
++      };
++      const patternAttributes = {
++        ...createKeepoutPatternAttributes(
++          keepout.pcb_keepout_id,
++          layer,
++          "pcb-keepout-outline",
++          keepout.description
++        ),
++        d,
++        fill: "none",
++        stroke: `url(#${KEEPOUT_PATTERN_ID})`,
++        "stroke-width": strokeWidth,
++        "stroke-linejoin": "round"
++      };
++      svgObjects.push(
++        { name: "path", type: "element", attributes: baseAttributes, children: [], value: "" },
++        { name: "path", type: "element", attributes: patternAttributes, children: [], value: "" }
++      );
+     } else if (keepout.shape === "circle") {
+       const circleKeepout = keepout;
+       const [cx, cy] = applyToPoint39(transform, [

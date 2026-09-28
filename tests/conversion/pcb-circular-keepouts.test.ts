@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import { parseAltiumPcbDoc, serializeAltiumPcbToSvg } from "altiumts"
-import type { PCBKeepoutCircle } from "circuit-json"
+import type { PCBKeepout } from "circuit-json"
 import { convertCircuitJsonToPcbSvg } from "circuit-to-svg"
 import { convertAltiumPcbDocToCircuitJson } from "../../lib"
 import { stackAltiumAndCircuitJsonSvgs } from "../helpers/stack-svg-comparison"
@@ -15,17 +15,21 @@ const circularKeepoutPcbDoc = parseAltiumPcbDoc(
 test("preserves an annular keepout without filling its center", async () => {
   const circuitJson = convertAltiumPcbDocToCircuitJson(circularKeepoutPcbDoc)
   const keepouts = circuitJson.filter(
-    (element): element is PCBKeepoutCircle => element.type === "pcb_keepout",
+    (element): element is PCBKeepout => element.type === "pcb_keepout",
   )
 
-  expect(keepouts.length).toBeGreaterThan(8)
+  expect(keepouts).toHaveLength(1)
+  const keepout = keepouts[0]
+  if (keepout?.shape !== "outline") {
+    throw new Error("Expected outline keepout")
+  }
+  expect(keepout.layers).toEqual(["top", "bottom"])
+  expect(keepout.stroke_width).toBeCloseTo(0.508)
+  expect(keepout.outline.length).toBeGreaterThan(32)
+  expect(keepout.outline.at(-1)).toEqual(keepout.outline[0])
   expect(
-    keepouts.every(
-      (keepout) =>
-        keepout.shape === "circle" &&
-        keepout.layers.join() === "top,bottom" &&
-        Math.hypot(keepout.center.x - 6.35, keepout.center.y - 6.35) >
-          keepout.radius,
+    keepout.outline.every(
+      (point) => Math.hypot(point.x - 6.35, point.y - 6.35) > 0.254,
     ),
   ).toBe(true)
   expect(
@@ -54,11 +58,14 @@ test("uses each full-circle keepout's copper layer and skips keepouts when disab
 
   const circuitJson = convertAltiumPcbDocToCircuitJson(document)
   const keepouts = circuitJson.filter(
-    (element): element is PCBKeepoutCircle => element.type === "pcb_keepout",
+    (element): element is PCBKeepout => element.type === "pcb_keepout",
   )
   expect(
-    keepouts.filter((keepout) => keepout.layers[0] === "top").length,
-  ).toBeGreaterThan(1)
+    keepouts.filter((keepout) => keepout.layers[0] === "top"),
+  ).toHaveLength(1)
+  expect(keepouts.find((keepout) => keepout.layers[0] === "top")?.shape).toBe(
+    "outline",
+  )
   expect(
     keepouts.filter((keepout) => keepout.layers[0] === "bottom"),
   ).toHaveLength(1)
@@ -75,4 +82,26 @@ test("uses each full-circle keepout's copper layer and skips keepouts when disab
   expect(
     withoutKeepouts.filter((element) => element.type === "pcb_trace"),
   ).toHaveLength(1)
+})
+
+test("represents a thin TI-style circular keepout with one polygonal outline", () => {
+  const document = parseAltiumPcbDoc(
+    [
+      "|RECORD=Board|SHEETWIDTH=500mil|SHEETHEIGHT=500mil",
+      "|RECORD=Arc|LAYER=KEEPOUT|LOCATION.X=100mil|LOCATION.Y=100mil|RADIUS=103mil|STARTANGLE=0|ENDANGLE=0|WIDTH=1mil",
+    ].join("\n"),
+  )
+  const keepouts = convertAltiumPcbDocToCircuitJson(document).filter(
+    (element): element is PCBKeepout => element.type === "pcb_keepout",
+  )
+
+  expect(keepouts).toHaveLength(1)
+  const keepout = keepouts[0]
+  if (keepout?.shape !== "outline") {
+    throw new Error("Expected outline keepout")
+  }
+  expect(keepout.stroke_width).toBeCloseTo(0.0254)
+  expect(keepout.outline.length).toBeGreaterThan(64)
+  expect(keepout.outline.length).toBeLessThan(200)
+  expect(keepout.outline.at(-1)).toEqual(keepout.outline[0])
 })

@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "altiumts": "github:tscircuit/altiumts#2010669c4e94819de68620b537ff9382d8f472f7",
-    "circuit-json": "^0.0.479",
+    "circuit-json": "0.0.485",
     "format-si-unit": "^0.0.11",
     "schematic-symbols": "^0.0.238",
     "transformation-matrix": "^2.16.1"
@@ -80,5 +80,8 @@
   },
   "overrides": {
     "sharp": "^0.35.3"
+  },
+  "patchedDependencies": {
+    "circuit-to-svg@0.0.394": "patches/circuit-to-svg@0.0.394.patch"
   }
 }

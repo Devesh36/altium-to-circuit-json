@@ -1,5 +1,5 @@
 import type { AltiumArcRecord } from "altiumts"
-import type { PCBKeepoutCircle } from "circuit-json"
+import type { PCBKeepout } from "circuit-json"
 import { milsToMillimeters, toMillimeterPoint } from "../geometry"
 import { isKeepoutLayer, type PcbCopperLayerMap } from "../layers"
 
@@ -11,7 +11,7 @@ export function convertPcbCircularKeepout({
   layerMap: PcbCopperLayerMap
   record: AltiumArcRecord
   recordIndex: number
-}): PCBKeepoutCircle[] {
+}): PCBKeepout[] {
   const center = record.center
   const radiusMils = record.radiusMils
   if (!center || !radiusMils || !record.isFullCircle) return []
@@ -37,25 +37,32 @@ export function convertPcbCircularKeepout({
       },
     ]
   }
-  // Circuit JSON has no annular keepout. Keep circle centers within half a
-  // stroke radius of each other so their union follows the stroked arc.
+  // Sample the centerline closely enough that its chord error stays below
+  // one sixteenth of the stroke radius. Repeating the first point closes it.
+  const maxChordError = strokeRadius / 16
   const count = Math.max(
-    8,
-    Math.ceil((4 * Math.PI * centerlineRadius) / strokeRadius),
+    32,
+    Math.ceil(Math.PI / Math.acos(1 - maxChordError / centerlineRadius)),
   )
-  return Array.from({ length: count }, (_, index) => {
+  const outline = Array.from({ length: count }, (_, index) => {
     const angle = (2 * Math.PI * index) / count
     return {
-      type: "pcb_keepout",
-      pcb_keepout_id: `${id}_${index}`,
-      shape: "circle",
-      center: {
-        x: centerPoint.x + centerlineRadius * Math.cos(angle),
-        y: centerPoint.y + centerlineRadius * Math.sin(angle),
-      },
-      radius: strokeRadius,
-      layers,
-      description: "Altium annular arc keepout",
+      x: centerPoint.x + centerlineRadius * Math.cos(angle),
+      y: centerPoint.y + centerlineRadius * Math.sin(angle),
     }
   })
+  const firstPoint = outline[0]
+  if (!firstPoint) return []
+  outline.push(firstPoint)
+  return [
+    {
+      type: "pcb_keepout",
+      pcb_keepout_id: id,
+      shape: "outline",
+      outline,
+      stroke_width: 2 * strokeRadius,
+      layers,
+      description: "Altium annular arc keepout",
+    },
+  ]
 }

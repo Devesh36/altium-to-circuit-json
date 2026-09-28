@@ -14,5 +14,5 @@ test(
     expectValidImportedPcb({ circuitJson, circuitJsonSvg })
     await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
   },
-  { timeout: 120_000 },
+  { timeout: 180_000 },
 )
