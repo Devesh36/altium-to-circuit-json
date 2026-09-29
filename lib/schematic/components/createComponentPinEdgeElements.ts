@@ -2,15 +2,18 @@ import type { AltiumSchPinRecord } from "altiumts"
 import type { AnyCircuitElement } from "circuit-json"
 import type { ConvertedPort } from "../model"
 import { createAlphanumericPinDesignatorText } from "./createAlphanumericPinDesignatorText"
+import { createNumericPinDesignatorText } from "./createNumericPinDesignatorText"
 import { createPinClockSymbol } from "./createPinClockSymbol"
 import type { ComponentConversionContext } from "./types"
 
 export function createComponentPinEdgeElements(
   {
     componentPorts,
+    includeNumericDesignators,
     pins,
   }: {
     componentPorts: ConvertedPort[]
+    includeNumericDesignators: boolean
     pins: AltiumSchPinRecord[]
   },
   context: ComponentConversionContext,
@@ -28,6 +31,9 @@ export function createComponentPinEdgeElements(
       }
       return [
         createAlphanumericPinDesignatorText(edgeElementParameters),
+        includeNumericDesignators
+          ? createNumericPinDesignatorText(edgeElementParameters)
+          : undefined,
         createPinClockSymbol(edgeElementParameters),
       ].filter((element) => element !== undefined)
     },
