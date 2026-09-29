@@ -11,8 +11,8 @@ import {
 } from "../symbols"
 import { addComponentFallbackText } from "./addComponentFallbackText"
 import { convertComponentPin } from "./convertComponentPin"
-import { createAlphanumericPinDesignatorText } from "./createAlphanumericPinDesignatorText"
-import { createPinClockSymbol } from "./createPinClockSymbol"
+import { convertPinlessComponent } from "./convertPinlessComponent"
+import { createComponentPinEdgeElements } from "./createComponentPinEdgeElements"
 import { createSourceComponent } from "./createSourceComponent"
 import { getComponentBodyBounds } from "./getComponentBodyBounds"
 import { getComponentIdentity } from "./getComponentIdentity"
@@ -43,18 +43,6 @@ export function convertComponent(
       record instanceof AltiumSchPinRecord &&
       (!isPinHidden(record) || options.includeHidden === true),
   )
-  if (pins.length === 0) return
-  const visibleSymbolLabels = new Set(
-    visibleOwnedRecords
-      .filter(
-        (record): record is AltiumSchLabelRecord =>
-          record instanceof AltiumSchLabelRecord,
-      )
-      .flatMap((record) => {
-        const text = record.text?.trim().toUpperCase()
-        return text ? [text] : []
-      }),
-  )
   const identity = getComponentIdentity(
     { componentIndex, componentRecord, ownedRecords },
     context,
@@ -71,6 +59,24 @@ export function convertComponent(
       }),
     )
   }
+  if (pins.length === 0) {
+    convertPinlessComponent(
+      { identity, ownedRecords: visibleOwnedRecords },
+      context,
+    )
+    return
+  }
+  const visibleSymbolLabels = new Set(
+    visibleOwnedRecords
+      .filter(
+        (record): record is AltiumSchLabelRecord =>
+          record instanceof AltiumSchLabelRecord,
+      )
+      .flatMap((record) => {
+        const text = record.text?.trim().toUpperCase()
+        return text ? [text] : []
+      }),
+  )
 
   const componentPorts = pins.map((pin, pinIndex) =>
     convertComponentPin({
@@ -108,22 +114,9 @@ export function convertComponent(
   if (symbolSelection) {
     applyNativeSymbolPortGeometry({ center, selection: symbolSelection })
   }
-  const pinEdgeElements = componentPorts.flatMap(
-    ({ isSchematicVisible, schematicPort }, pinIndex) => {
-      if (!isSchematicVisible) return []
-      const pin = pins[pinIndex]
-      if (!pin) return []
-      const edgeElementParameters = {
-        pin,
-        recordIndex: document.records.indexOf(pin),
-        scale: options.scale,
-        schematicPort,
-      }
-      return [
-        createAlphanumericPinDesignatorText(edgeElementParameters),
-        createPinClockSymbol(edgeElementParameters),
-      ].filter((element) => element !== undefined)
-    },
+  const pinEdgeElements = createComponentPinEdgeElements(
+    { componentPorts, pins },
+    context,
   )
   convertedPorts.push(...componentPorts)
   elements.push(
