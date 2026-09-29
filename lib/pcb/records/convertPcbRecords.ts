@@ -9,7 +9,7 @@ import {
   AltiumViaRecord,
 } from "altiumts"
 import {
-  convertPcbCircularKeepout,
+  convertPcbArcKeepout,
   convertPcbDimension,
   convertPcbFabricationNotePath,
   isExplodedPcbDimensionGraphic,
@@ -38,17 +38,18 @@ export function convertPcbRecords(context: PcbConversionContext): void {
   const { document, elements, layerMap, netContext, options } = context
   const routing = { layerMap, netContext }
   for (const [recordIndex, record] of document.records.entries()) {
-    if (
+    const isKeepoutArc =
       record instanceof AltiumArcRecord &&
-      isKeepoutLayer(record.layer) &&
-      options.includeKeepouts !== false
-    ) {
-      const keepout = convertPcbCircularKeepout({
-        layerMap,
-        record,
-        recordIndex,
-      })
-      if (keepout) elements.push(keepout)
+      (isKeepoutLayer(record.layer) || record.getBoolean("KEEPOUT") === true)
+    if (isKeepoutArc) {
+      if (options.includeKeepouts !== false) {
+        const keepout = convertPcbArcKeepout({
+          layerMap,
+          record,
+          recordIndex,
+        })
+        if (keepout) elements.push(keepout)
+      }
       continue
     }
 

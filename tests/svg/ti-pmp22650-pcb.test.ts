@@ -21,6 +21,25 @@ test(
       expectedConnectionCount: 410,
       expectedInheritedCopperAreaCount: 395,
     })
+    expect(
+      circuitJson.filter(
+        (element) =>
+          element.type === "pcb_trace" && !("source_trace_id" in element),
+      ),
+    ).toHaveLength(0)
+
+    const layerSpecificKeepoutArcs = circuitJson.filter(
+      (element) =>
+        element.type === "pcb_keepout" && element.shape === "outline",
+    )
+    expect(layerSpecificKeepoutArcs).toHaveLength(159)
+    expect(layerSpecificKeepoutArcs).toContainEqual(
+      expect.objectContaining({
+        pcb_keepout_id: "pcb_keepout_altium_arc_4291",
+        layers: ["top"],
+        stroke_width: 0.0254,
+      }),
+    )
     await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
   },
   { timeout: 180_000 },

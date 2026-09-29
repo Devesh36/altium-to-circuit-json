@@ -12,7 +12,7 @@ const document = parseAltiumPcbDoc(
   ].join("\n"),
 )
 
-test("snapshot: top-layer keepout arc is rendered as copper", async () => {
+test("snapshot: top-layer keepout arc is not rendered as copper", async () => {
   const circuitJson = convertAltiumPcbDocToCircuitJson(document)
   const comparisonSvg = stackAltiumAndCircuitJsonSvgs({
     altiumSvg: serializeAltiumPcbToSvg(document, {
@@ -28,12 +28,12 @@ test("snapshot: top-layer keepout arc is rendered as copper", async () => {
       viewport: getPcbBoardViewport(circuitJson),
       matchBoardAspectRatio: true,
     }),
-    label: "Top-layer keepout arc converted as copper",
+    label: "Top-layer keepout arc preserved as a keepout outline",
   })
   await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
 })
 
-test.failing("keeps the arc out of copper and leaves its center clear", () => {
+test("converts the arc to a layer-specific outline keepout", () => {
   const circuitJson = convertAltiumPcbDocToCircuitJson(document)
   const keepouts = circuitJson.filter(
     (element) => element.type === "pcb_keepout",
@@ -42,13 +42,31 @@ test.failing("keeps the arc out of copper and leaves its center clear", () => {
   expect(
     circuitJson.filter((element) => element.type === "pcb_trace"),
   ).toHaveLength(0)
-  expect(keepouts.length).toBeGreaterThan(0)
+  expect(keepouts).toHaveLength(1)
+  expect(keepouts[0]).toMatchObject({
+    shape: "outline",
+    stroke_width: 0.762,
+    layers: ["top"],
+  })
+  const keepout = keepouts[0]
+  if (keepout?.shape !== "outline") {
+    throw new Error("Expected an outline keepout")
+  }
+  expect(keepout.outline).toHaveLength(49)
   expect(
-    keepouts.every(
-      (keepout) =>
-        keepout.shape === "circle" &&
-        Math.hypot(keepout.center.x - 6.35, keepout.center.y - 6.35) >
-          keepout.radius,
+    keepout.outline.every(
+      (point) =>
+        Math.abs(Math.hypot(point.x - 6.35, point.y - 6.35) - 2.032) < 0.000001,
     ),
   ).toBe(true)
+
+  const withoutKeepouts = convertAltiumPcbDocToCircuitJson(document, {
+    includeKeepouts: false,
+  })
+  expect(
+    withoutKeepouts.some(
+      (element) =>
+        element.type === "pcb_keepout" || element.type === "pcb_trace",
+    ),
+  ).toBe(false)
 })

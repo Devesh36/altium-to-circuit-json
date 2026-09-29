@@ -27,6 +27,12 @@ test(
     expect(
       circuitJson.filter((element) => element.type === "pcb_smtpad").length,
     ).toBeGreaterThan(5_000)
+    expect(
+      circuitJson.filter(
+        (element) =>
+          element.type === "pcb_keepout" && element.shape === "outline",
+      ),
+    ).toHaveLength(14)
     const representativeElements = [
       ...new Map(
         circuitJson.map((element) => [element.type, element]),
