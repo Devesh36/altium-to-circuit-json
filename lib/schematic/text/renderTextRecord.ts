@@ -19,6 +19,7 @@ import { createText } from "./createText"
 import { decodeMultilineText } from "./decodeMultilineText"
 import { getFontFamily } from "./getFontFamily"
 import { getFontSize } from "./getFontSize"
+import { resolveSchematicText } from "./resolveSchematicText"
 import { wrapSchematicText } from "./wrapSchematicText"
 
 export function renderTextRecord({
@@ -48,12 +49,18 @@ export function renderTextRecord({
   ) {
     if (options.includeText === false) return []
     if (record.getBoolean("ISHIDDEN") && !options.includeHidden) return []
-    const text =
+    const reference =
       record.getDecoded("TEXT") ??
       record.getDecoded("NAME") ??
       record.getDecoded("DESIGNATOR")
     const location = getLocation(record)
-    if (!text || !location) return []
+    if (!reference || !location) return []
+    const text = resolveSchematicText({
+      document: context.document,
+      options,
+      record,
+      reference,
+    })
     return [createText({ record, index, text, location, color, context })]
   }
 
@@ -117,7 +124,6 @@ export function renderTextRecord({
         anchor: `top_${horizontalAnchor}` as SchematicText["anchor"],
       }),
     )
-
     const isSolid = record.getBoolean("ISSOLID") === true
     const showBorder = record.getBoolean("SHOWBORDER") === true
     if (isSolid || showBorder) {

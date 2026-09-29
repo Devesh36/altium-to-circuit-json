@@ -1,5 +1,6 @@
 import type { AltiumRecord, AltiumSchComponentRecord } from "altiumts"
 import type { SourceComponentDesignator } from "../model"
+import { resolveSchematicText } from "../text/resolveSchematicText"
 import { findOwnedDesignator } from "./findOwnedDesignator"
 import { findOwnedParameterText } from "./findOwnedParameterText"
 import type { ComponentConversionContext, ComponentIdentity } from "./types"
@@ -20,13 +21,19 @@ export function getComponentIdentity(
     findOwnedDesignator(ownedRecords) ??
     componentRecord.designator ??
     `U${componentIndex}`
-  const displayText =
+  const displayTextReference =
     findOwnedParameterText(ownedRecords, "Value")?.trim() ||
     findOwnedParameterText(ownedRecords, "Comment")?.trim() ||
     componentRecord.comment?.trim() ||
     componentRecord.designItemId?.trim() ||
     componentRecord.libraryReference?.trim() ||
     ""
+  const displayText = resolveSchematicText({
+    document: context.document,
+    options: context.options,
+    record: componentRecord,
+    reference: displayTextReference,
+  }).trim()
   const libraryReference =
     componentRecord.libraryReference ??
     componentRecord.designItemId ??

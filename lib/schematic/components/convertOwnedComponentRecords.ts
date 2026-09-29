@@ -34,7 +34,7 @@ export function convertOwnedComponentRecords(
       {
         index,
         options: {
-          includeHidden: context.options.includeHidden,
+          ...context.options,
           includeText:
             record instanceof AltiumSchPinRecord
               ? false

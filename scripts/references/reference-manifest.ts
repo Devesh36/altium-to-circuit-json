@@ -51,21 +51,25 @@ export const TI_POWER_REFERENCE_PCB_FILENAMES = {
 export const TI_EVM_REFERENCE_FILENAMES = {
   drv8307Evm: {
     pcb: "ti-drv8307evm.PcbDoc",
+    project: "ti-drv8307evm.PrjPcb",
     schematic: "ti-drv8307evm.SchDoc",
   },
   lm251772EvmPd: {
     hardwareSchematic: "ti-lm251772evm-pd-hardware.SchDoc",
     pcb: "ti-lm251772evm-pd.PcbDoc",
+    project: "ti-lm251772evm-pd.PrjPcb",
     schematic: "ti-lm251772evm-pd.SchDoc",
   },
   lm5155EvmFly: {
     hardwareSchematic: "ti-lm5155evm-fly-hardware.SchDoc",
     pcb: "ti-lm5155evm-fly.PcbDoc",
+    project: "ti-lm5155evm-fly.PrjPcb",
     schematic: "ti-lm5155evm-fly.SchDoc",
   },
   lmg342xBbEvm: {
     hardwareSchematic: "ti-lmg342x-bb-evm-hardware.SchDoc",
     pcb: "ti-lmg342x-bb-evm.PcbDoc",
+    project: "ti-lmg342x-bb-evm.PrjPcb",
     schematic: "ti-lmg342x-bb-evm.SchDoc",
   },
 } as const
@@ -229,6 +233,12 @@ export const ZIP_BUNDLES: ZipBundleSpec[] = [
           "e6cd99036f0bc574794d48a91953da856dac0f20bd35fb554152115329f14847",
       },
       {
+        archivePath: "Board files/DRV8307EVM RevA.PrjPcb",
+        filename: TI_EVM_REFERENCE_FILENAMES.drv8307Evm.project,
+        sha256:
+          "e8a912b1a75d07b75648ff6d169c774e85bf145c1e0a63ca7e15566553744a60",
+      },
+      {
         archivePath: "Board files/DRV8307EVM RevA.SchDoc",
         filename: TI_EVM_REFERENCE_FILENAMES.drv8307Evm.schematic,
         sha256:
@@ -248,6 +258,12 @@ export const ZIP_BUNDLES: ZipBundleSpec[] = [
         filename: TI_EVM_REFERENCE_FILENAMES.lm5155EvmFly.pcb,
         sha256:
           "ccc8f911ee9d62bdd22b163e14eef9c29c386295eaa6d317160051174673e134",
+      },
+      {
+        archivePath: "BMC029A.PrjPcb",
+        filename: TI_EVM_REFERENCE_FILENAMES.lm5155EvmFly.project,
+        sha256:
+          "43732f49a7ea71e54a576ce8d0d195cca8b9fc30b32a99b6a5f2e119ab328392",
       },
       {
         archivePath: "BMC029A_SCH.SchDoc",
@@ -277,6 +293,12 @@ export const ZIP_BUNDLES: ZipBundleSpec[] = [
           "4ea0c86dd08d0854a6544a2ef4ca55f5009205820d78073c095dff49ad8b52dd",
       },
       {
+        archivePath: "Altium_Files/SR135B.PrjPcb",
+        filename: TI_EVM_REFERENCE_FILENAMES.lm251772EvmPd.project,
+        sha256:
+          "6319939d026b6787992fcfb2315e3a7b4e3b0866fc71a7f2e05a50d42d554108",
+      },
+      {
         archivePath: "Altium_Files/SR135B.SchDoc",
         filename: TI_EVM_REFERENCE_FILENAMES.lm251772EvmPd.schematic,
         sha256:
@@ -302,6 +324,12 @@ export const ZIP_BUNDLES: ZipBundleSpec[] = [
         filename: TI_EVM_REFERENCE_FILENAMES.lmg342xBbEvm.pcb,
         sha256:
           "450f785560eaf50e8e8ad62b9f2b5bb124ca67fa403f4b3a85ca7009873e0122",
+      },
+      {
+        archivePath: "LMG342X_BB_EVM.PrjPcb",
+        filename: TI_EVM_REFERENCE_FILENAMES.lmg342xBbEvm.project,
+        sha256:
+          "9273df6fe1db9c9524c37bb4526e28932ecdc7044a6762d0b6fe446bad5cd9fe",
       },
       {
         archivePath: "LMG342X_BB_EVM.SchDoc",

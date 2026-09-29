@@ -7,8 +7,7 @@ export function convertSchematicSemantics(
   context: SchematicConversionContext,
 ): void {
   const conversion = convertSemanticSchematic(context.document, {
-    includeHidden: context.options.includeHidden,
-    includeText: context.options.includeText,
+    ...context.options,
     scale: context.scale,
     schematicSheetId: SCHEMATIC_SHEET_ID,
   })

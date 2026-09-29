@@ -9,6 +9,7 @@ test(
     const { circuitJson, circuitJsonSvg, comparisonSvg } =
       await createOpenSourceSchematicComparison({
         filename: TI_EVM_REFERENCE_FILENAMES.lm251772EvmPd.schematic,
+        projectFilename: TI_EVM_REFERENCE_FILENAMES.lm251772EvmPd.project,
         schematicName: "TI LM251772EVM-PD",
       })
 

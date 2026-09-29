@@ -6,10 +6,9 @@ import type {
   SourcePort,
 } from "circuit-json"
 import type { SchSymbol } from "schematic-symbols"
+import type { ConvertAltiumSchDocOptions } from "../../api"
 
-export interface SemanticSchematicOptions {
-  includeHidden?: boolean
-  includeText?: boolean
+export interface SemanticSchematicOptions extends ConvertAltiumSchDocOptions {
   scale: number
   schematicSheetId: string
 }
