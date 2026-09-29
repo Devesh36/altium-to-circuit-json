@@ -64,7 +64,7 @@
     "bun-match-svg": "^0.0.15",
     "circuit-json-to-connectivity-map": "^0.0.25",
     "circuit-to-svg": "^0.0.394",
-    "circuit-to-svg-schematic-graphics": "npm:circuit-to-svg@0.0.415",
+    "circuit-to-svg-schematic-graphics": "npm:circuit-to-svg@0.0.435",
     "sharp": "^0.35.3",
     "stack-svgs": "^0.0.1",
     "tsup": "^8.5.1",
