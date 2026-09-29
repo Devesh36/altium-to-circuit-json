@@ -1,6 +1,7 @@
 import {
   AltiumBinaryPcbDoc,
   AltiumPcbDoc,
+  type AltiumPcbDocument,
   getPcbBoardGeometry,
   parseAltiumFile,
   serializeAltiumPcbToSvg,
@@ -15,6 +16,7 @@ interface OpenSourcePcbComparison {
   circuitJson: AnyCircuitElement[]
   circuitJsonSvg: string
   comparisonSvg: string
+  document: AltiumPcbDocument
 }
 
 export async function createOpenSourcePcbComparison({
@@ -78,5 +80,5 @@ export async function createOpenSourcePcbComparison({
     label: `${pcbName} PCB`,
   })
 
-  return { circuitJson, circuitJsonSvg, comparisonSvg }
+  return { circuitJson, circuitJsonSvg, comparisonSvg, document }
 }

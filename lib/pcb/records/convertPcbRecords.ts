@@ -22,7 +22,6 @@ import {
   isOverlayLayer,
 } from "../layers"
 import type { PcbConversionContext } from "../model"
-import { convertPcbPad } from "../pads"
 import { convertPcbArcTrack, convertPcbTrack, convertPcbVia } from "../routing"
 import {
   convertPcbSilkscreenArc,
@@ -33,6 +32,7 @@ import {
   isHiddenPcbComponentText,
 } from "../silkscreen"
 import { convertPcbCopperText, convertPcbMechanicalText } from "../text"
+import { convertPcbPadRecord } from "./convertPcbPadRecord"
 
 export function convertPcbRecords(context: PcbConversionContext): void {
   const { document, elements, layerMap, netContext, options } = context
@@ -69,8 +69,7 @@ export function convertPcbRecords(context: PcbConversionContext): void {
     }
 
     if (record instanceof AltiumPadRecord && options.includePads !== false) {
-      const pad = convertPcbPad({ layerMap, record, recordIndex })
-      if (pad) elements.push(pad)
+      convertPcbPadRecord({ context, record, recordIndex })
       continue
     }
 

@@ -3,6 +3,15 @@ import type { PcbConversionContext } from "../model"
 import { createComponents } from "./createComponents"
 
 export function convertPcbComponents(context: PcbConversionContext): void {
+  if (
+    context.options.includeComponents !== false ||
+    context.options.includePads !== false
+  ) {
+    context.elements.push(...context.componentContext.sourceComponents)
+  }
+  if (context.options.includePads !== false) {
+    context.elements.push(...context.componentContext.sourcePorts)
+  }
   if (context.options.includeComponents === false) return
   context.elements.push(...createComponents(context.document))
   if (context.options.includeCourtyards !== false) {
