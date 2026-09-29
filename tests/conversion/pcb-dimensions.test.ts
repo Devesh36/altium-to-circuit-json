@@ -43,6 +43,40 @@ test("preserves non-empty custom dimension suffixes", () => {
   expect(dimension?.text).toBe("~300.0 nominal")
 })
 
+test("projects dimensions without losing their reference anchors", () => {
+  const document = parseAltiumPcbDoc(
+    [
+      "|RECORD=Board|KIND0=0|VX0=0mil|VY0=0mil|KIND1=0|VX1=5000mil|VY1=0mil|KIND2=0|VX2=5000mil|VY2=5000mil|KIND3=0|VX3=0mil|VY3=5000mil|KIND4=0|VX4=0mil|VY4=0mil",
+      "|RECORD=Dimension|LAYER=MECHANICAL2|DIMENSIONKIND=1|ANGLE=90|REFERENCES_COUNT=2|REFERENCE0POINTX=700mil|REFERENCE0POINTY=5100mil|REFERENCE1POINTX=4800mil|REFERENCE1POINTY=1500mil|X1=600mil|Y1=5100mil|TEXTFORMAT=10mil|TEXTDIMENSIONUNIT=MILS|TEXTPRECISION=0",
+    ].join("\n"),
+  )
+
+  const elements = convertAltiumPcbDocToCircuitJson(document)
+  const dimension = elements.find(
+    (element): element is PcbFabricationNoteDimension =>
+      element.type === "pcb_fabrication_note_dimension",
+  )
+  const extensionPath = elements.find(
+    (element): element is PcbFabricationNotePath =>
+      element.type === "pcb_fabrication_note_path",
+  )
+
+  expect(dimension?.from.x).toBeCloseTo(17.78)
+  expect(dimension?.from.y).toBeCloseTo(129.54)
+  expect(dimension?.to.x).toBeCloseTo(17.78)
+  expect(dimension?.to.y).toBeCloseTo(38.1)
+  expect(dimension?.text).toBe("3600 mil")
+  expect(dimension?.offset_distance).toBeCloseTo(2.54)
+  expect(dimension?.offset_direction?.x).toBeCloseTo(-1)
+  expect(dimension?.offset_direction?.y).toBeCloseTo(0)
+  expect(extensionPath?.route).toHaveLength(2)
+  expect(extensionPath?.route[0]?.x).toBeCloseTo(121.92)
+  expect(extensionPath?.route[0]?.y).toBeCloseTo(38.1)
+  expect(extensionPath?.route[1]?.x).toBeCloseTo(17.78)
+  expect(extensionPath?.route[1]?.y).toBeCloseTo(38.1)
+  expect(extensionPath?.stroke_width).toBeCloseTo(0.2032)
+})
+
 test("imports exploded EasyEDA dimensions as fabrication-note paths", () => {
   const document = parseAltiumPcbDoc(
     [

@@ -10,7 +10,7 @@ import {
 } from "altiumts"
 import {
   convertPcbArcKeepout,
-  convertPcbDimension,
+  convertPcbDimensionElements,
   convertPcbFabricationNotePath,
   isExplodedPcbDimensionGraphic,
 } from "../annotations"
@@ -55,11 +55,9 @@ export function convertPcbRecords(context: PcbConversionContext): void {
 
     if (record instanceof AltiumDimensionRecord) {
       if (options.includeDimensions === false) continue
-      const dimension = convertPcbDimension({ record, recordIndex })
-      if (dimension) elements.push(dimension)
+      elements.push(...convertPcbDimensionElements({ record, recordIndex }))
       continue
     }
-
     if (
       options.includeDimensions !== false &&
       isExplodedPcbDimensionGraphic(document, record)

@@ -11,6 +11,7 @@ test(
         filename: TI_EVM_REFERENCE_FILENAMES.lm5155EvmFly.pcb,
         focusOnBoard: true,
         pcbName: "TI LM5155EVM-FLY",
+        showSolderMask: true,
       })
 
     expectValidImportedPcb({ circuitJson, circuitJsonSvg })

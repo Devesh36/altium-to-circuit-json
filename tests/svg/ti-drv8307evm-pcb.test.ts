@@ -11,6 +11,7 @@ test(
         filename: TI_EVM_REFERENCE_FILENAMES.drv8307Evm.pcb,
         focusOnBoard: true,
         pcbName: "TI DRV8307EVM",
+        showSolderMask: true,
       })
 
     expectValidImportedPcb({ circuitJson, circuitJsonSvg })

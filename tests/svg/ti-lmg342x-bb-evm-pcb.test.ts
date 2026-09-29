@@ -11,6 +11,7 @@ test(
         filename: TI_EVM_REFERENCE_FILENAMES.lmg342xBbEvm.pcb,
         focusOnBoard: true,
         pcbName: "TI LMG342X-BB-EVM",
+        showSolderMask: true,
       })
 
     expectValidImportedPcb({ circuitJson, circuitJsonSvg })

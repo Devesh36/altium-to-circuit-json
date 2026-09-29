@@ -12,6 +12,8 @@ import { convertAltiumToCircuitJson } from "../../lib"
 import { readReferenceBytes } from "./read-reference"
 import { stackAltiumAndCircuitJsonSvgs } from "./stack-svg-comparison"
 
+const PCB_CANVAS_COLOR = "#071a16"
+
 interface OpenSourcePcbComparison {
   circuitJson: AnyCircuitElement[]
   circuitJsonSvg: string
@@ -23,10 +25,12 @@ export async function createOpenSourcePcbComparison({
   filename,
   focusOnBoard = false,
   pcbName,
+  showSolderMask = false,
 }: {
   filename: string
   focusOnBoard?: boolean
   pcbName: string
+  showSolderMask?: boolean
 }): Promise<OpenSourcePcbComparison> {
   const source = await readReferenceBytes(filename)
   const document = parseAltiumFile(source).document
@@ -70,6 +74,13 @@ export async function createOpenSourcePcbComparison({
   })
   const circuitJsonSvg = convertCircuitJsonToPcbSvg(circuitJson, {
     matchBoardAspectRatio: true,
+    ...(showSolderMask
+      ? {
+          backgroundColor: PCB_CANVAS_COLOR,
+          colorOverrides: { drill: PCB_CANVAS_COLOR },
+          showSolderMask: true,
+        }
+      : {}),
     viewportTarget: focusOnBoard
       ? { pcb_board_id: board.pcb_board_id }
       : undefined,
