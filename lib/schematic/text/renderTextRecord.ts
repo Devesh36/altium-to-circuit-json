@@ -38,7 +38,14 @@ export function renderTextRecord({
 }): AnyCircuitElement[] | undefined {
   const kind = record.recordKind
   const scale = context.scale
-  if (kind === "4" || kind === "25" || kind === "34" || kind === "41") {
+  if (
+    kind === "4" ||
+    kind === "25" ||
+    kind === "32" ||
+    kind === "33" ||
+    kind === "34" ||
+    kind === "41"
+  ) {
     if (options.includeText === false) return []
     if (record.getBoolean("ISHIDDEN") && !options.includeHidden) return []
     const text =

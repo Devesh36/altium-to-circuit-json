@@ -9,6 +9,8 @@ import { renderPin } from "./renderPin"
 import { renderPowerPort } from "./renderPowerPort"
 import { renderPrimitiveRecord } from "./renderPrimitiveRecord"
 import { renderSchematicImageRecord } from "./renderSchematicImageRecord"
+import { renderSheetEntry } from "./renderSheetEntry"
+import { renderSheetSymbol } from "./renderSheetSymbol"
 
 export function convertSchematicRecord(
   {
@@ -32,6 +34,11 @@ export function convertSchematicRecord(
 
   if (record instanceof AltiumSchImageRecord) {
     return renderSchematicImageRecord({ context, index, record })
+  }
+
+  if (kind === "15") return renderSheetSymbol({ context, index, record })
+  if (kind === "16") {
+    return renderSheetEntry({ context, index, options, record })
   }
 
   const primitive = renderPrimitiveRecord({
