@@ -1,7 +1,7 @@
 import type { AltiumRecord, AltiumSchPinRecord } from "altiumts"
 import type { AnyCircuitElement } from "circuit-json"
-import { convertSchematicArcToPath } from "../rendering/convertSchematicArcToPath"
 import { convertOwnedComponentRecords } from "./convertOwnedComponentRecords"
+import { prepareOwnedComponentBodyElements } from "./prepareOwnedComponentBodyElements"
 import type { ComponentConversionContext, ComponentIdentity } from "./types"
 
 export function convertOwnedLogicGateBody(
@@ -40,17 +40,5 @@ export function convertOwnedLogicGateBody(
     return undefined
   }
 
-  return ownedElements
-    .map((element) =>
-      element.type === "schematic_arc"
-        ? convertSchematicArcToPath(element)
-        : element,
-    )
-    .sort((left, right) => {
-      const leftIsFilled =
-        "is_filled" in left && left.is_filled === true ? 1 : 0
-      const rightIsFilled =
-        "is_filled" in right && right.is_filled === true ? 1 : 0
-      return rightIsFilled - leftIsFilled
-    })
+  return prepareOwnedComponentBodyElements(ownedElements)
 }
