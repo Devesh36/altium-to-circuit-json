@@ -27,7 +27,7 @@ export function createDirectText({
     schematic_text_id: id,
     schematic_sheet_id: SCHEMATIC_SHEET_ID,
     text,
-    font_size: Math.max(scaleLength(fontSize, scale), 0.2),
+    font_size: scaleLength(fontSize, scale),
     position: scalePoint(location, scale),
     rotation: ccwRotationDegrees,
     anchor,

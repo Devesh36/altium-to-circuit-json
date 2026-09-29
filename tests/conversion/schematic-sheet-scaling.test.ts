@@ -83,7 +83,8 @@ test("TI schematic coordinates fit and center on the Circuit JSON sheet", async 
       element.type === "schematic_text" &&
       element.schematic_text_id === "schematic_text_frame_line_altium_1142_0",
   )
-  expect(note).toMatchObject({ font_size: 0.2, text: "D-Note:-" })
+  expect(note?.text).toBe("D-Note:-")
+  expect(note?.font_size).toBeCloseTo(0.142458, 6)
   expect(
     circuitJson.every(
       (element) => any_circuit_element.safeParse(element).success,
