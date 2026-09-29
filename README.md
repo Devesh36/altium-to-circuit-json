@@ -128,6 +128,13 @@ transformer boards, and the PMP22650 package's PMP22650, PMP22712, and PMP22773
 boards. Each is downloaded directly from its checksum-pinned TI CAD/CAE archive
 and has an Altium-to-Circuit-JSON side-by-side SVG repro.
 
+The TI EVM corpus covers DRV8307EVM, LM5155EVM-FLY, LM251772EVM-PD, and
+LMG342X-BB-EVM. Their checksum-pinned PCB, electrical schematic, and hardware
+drawing documents each have an Altium-to-Circuit-JSON side-by-side SVG repro.
+SK-AM62A-LP is not included in this corpus because TI publishes its source as an
+Allegro ASCII board and OrCAD schematic rather than Altium `PcbDoc`/`SchDoc`
+documents.
+
 The TI SPRCAL9 / TMDS62LEVM Rev. B regression corpus includes all 57
 schematic sheets and a full top-side PCB comparison. Its large downloaded source
 files are checksum-verified and cached in CI. To also write the complete

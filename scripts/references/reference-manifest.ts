@@ -48,6 +48,28 @@ export const TI_POWER_REFERENCE_PCB_FILENAMES = {
   pmp23653PlanarTransformer: "ti-pmp23653-planar-transformer.PcbDoc",
 } as const
 
+export const TI_EVM_REFERENCE_FILENAMES = {
+  drv8307Evm: {
+    pcb: "ti-drv8307evm.PcbDoc",
+    schematic: "ti-drv8307evm.SchDoc",
+  },
+  lm251772EvmPd: {
+    hardwareSchematic: "ti-lm251772evm-pd-hardware.SchDoc",
+    pcb: "ti-lm251772evm-pd.PcbDoc",
+    schematic: "ti-lm251772evm-pd.SchDoc",
+  },
+  lm5155EvmFly: {
+    hardwareSchematic: "ti-lm5155evm-fly-hardware.SchDoc",
+    pcb: "ti-lm5155evm-fly.PcbDoc",
+    schematic: "ti-lm5155evm-fly.SchDoc",
+  },
+  lmg342xBbEvm: {
+    hardwareSchematic: "ti-lmg342x-bb-evm-hardware.SchDoc",
+    pcb: "ti-lmg342x-bb-evm.PcbDoc",
+    schematic: "ti-lmg342x-bb-evm.SchDoc",
+  },
+} as const
+
 export const DIRECT_REFERENCES: DirectReferenceSpec[] = [
   {
     filename: "ch582.PcbDoc",
@@ -195,6 +217,108 @@ const tiSchematicHashes: Record<string, string> = {
 }
 
 export const ZIP_BUNDLES: ZipBundleSpec[] = [
+  {
+    archiveSha256:
+      "660117e30c1f12473f18d825a8318a5460a13025a7a6223689ac1f9afd3921d8",
+    nestedArchives: [],
+    outputs: [
+      {
+        archivePath: "Board files/DRV8307EVM RevA.PcbDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.drv8307Evm.pcb,
+        sha256:
+          "e6cd99036f0bc574794d48a91953da856dac0f20bd35fb554152115329f14847",
+      },
+      {
+        archivePath: "Board files/DRV8307EVM RevA.SchDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.drv8307Evm.schematic,
+        sha256:
+          "478b7e0d88ea8419da186388e57acb13fcfbee0bc5b9be253b7192e75d79fd07",
+      },
+    ],
+    source: "Texas Instruments DRV8307EVM design files SLVC565A",
+    url: "https://www.ti.com/lit/zip/slvc565a",
+  },
+  {
+    archiveSha256:
+      "e8a1573658d294c6b47c8cdd8833df2d50302ac242afe88ecb8e60ca2f80b215",
+    nestedArchives: [],
+    outputs: [
+      {
+        archivePath: "BMC029A.PcbDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lm5155EvmFly.pcb,
+        sha256:
+          "ccc8f911ee9d62bdd22b163e14eef9c29c386295eaa6d317160051174673e134",
+      },
+      {
+        archivePath: "BMC029A_SCH.SchDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lm5155EvmFly.schematic,
+        sha256:
+          "3b7dbfb4681d2d9e97ad1f41eb13b088d0b2c17038f47c702632605d734e8970",
+      },
+      {
+        archivePath: "BMC029A-HW.SchDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lm5155EvmFly.hardwareSchematic,
+        sha256:
+          "947f873d4b746cdbe2cfeabd326cf4c8f3e0c21488169edc64b305091e239fb4",
+      },
+    ],
+    source: "Texas Instruments LM5155EVM-FLY design files SNVR499",
+    url: "https://www.ti.com/lit/zip/SNVR499",
+  },
+  {
+    archiveSha256:
+      "d538f1bb6dc0976a1d0509faf0a9f6a7932fc1e80ed3730740272fb390e8516f",
+    nestedArchives: [],
+    outputs: [
+      {
+        archivePath: "Altium_Files/SR135B.PcbDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lm251772EvmPd.pcb,
+        sha256:
+          "4ea0c86dd08d0854a6544a2ef4ca55f5009205820d78073c095dff49ad8b52dd",
+      },
+      {
+        archivePath: "Altium_Files/SR135B.SchDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lm251772EvmPd.schematic,
+        sha256:
+          "1ca97d1b95c42f4491d5d1dec9ea262393d7e70a992c434e96c6c810723e648a",
+      },
+      {
+        archivePath: "Altium_Files/SR135B_Hardware.SchDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lm251772EvmPd.hardwareSchematic,
+        sha256:
+          "9972780da31436e2a2d7b3d4ac0fa2b09d4ed7e0f3c19d5c6dfbab2b367020da",
+      },
+    ],
+    source: "Texas Instruments LM251772EVM-PD design files SLVC869",
+    url: "https://www.ti.com/lit/zip/slvc869",
+  },
+  {
+    archiveSha256:
+      "3aba23eea3b9c4751d55468e8716a2c95277b9cd581edc9ae8ef4fb058717b09",
+    nestedArchives: [],
+    outputs: [
+      {
+        archivePath: "LMG342X_BB_EVM.PcbDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lmg342xBbEvm.pcb,
+        sha256:
+          "450f785560eaf50e8e8ad62b9f2b5bb124ca67fa403f4b3a85ca7009873e0122",
+      },
+      {
+        archivePath: "LMG342X_BB_EVM.SchDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lmg342xBbEvm.schematic,
+        sha256:
+          "a1f3d59a15dae06027b3c269974a92d672f4c2d6ebb3a42e8fbb8ec4ffa4d9bc",
+      },
+      {
+        archivePath: "LMG342X_BB_EVM_Hardware.SchDoc",
+        filename: TI_EVM_REFERENCE_FILENAMES.lmg342xBbEvm.hardwareSchematic,
+        sha256:
+          "426f2545076e0ca47558e1c8f56aced0864da8f818d4617c6a3fb172a9f82594",
+      },
+    ],
+    source: "Texas Instruments LMG342X-BB-EVM design files SNOC050",
+    url: "https://www.ti.com/lit/zip/snoc050",
+  },
   {
     archiveSha256:
       "40e6c4d0bea5381bf7b4e0ef26ec4ec9adae156be308e4a3838bd344972b7615",

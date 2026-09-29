@@ -5,16 +5,21 @@ import { findDetachedSymbolPortIds } from "./find-detached-symbol-ports"
 export function expectValidImportedSchematic({
   circuitJson,
   circuitJsonSvg,
+  requireTraces = true,
 }: {
   circuitJson: AnyCircuitElement[]
   circuitJsonSvg: string
+  requireTraces?: boolean
 }): void {
   expect(
     circuitJson.filter((element) => element.type === "schematic_sheet"),
   ).toHaveLength(1)
-  expect(
-    circuitJson.filter((element) => element.type === "schematic_trace").length,
-  ).toBeGreaterThan(0)
+  if (requireTraces) {
+    expect(
+      circuitJson.filter((element) => element.type === "schematic_trace")
+        .length,
+    ).toBeGreaterThan(0)
+  }
   expect(
     circuitJson.filter((element) => element.type === "schematic_text").length,
   ).toBeGreaterThan(0)
