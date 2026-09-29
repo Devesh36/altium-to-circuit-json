@@ -12,6 +12,7 @@ export interface ComponentConversionContext {
   elements: AnyCircuitElement[]
   handledRecords: Set<AltiumRecord>
   options: SemanticSchematicOptions
+  sheetRecord: AltiumRecord | undefined
   sourceComponentIdByDesignator: Map<SourceComponentDesignator, string>
 }
 

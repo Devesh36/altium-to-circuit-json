@@ -72,6 +72,7 @@ export function convertComponent(
       pin,
       pinIndex,
       schematicComponentId: identity.schematicComponentId,
+      sheetRecord: context.sheetRecord,
       sourceComponentId: identity.sourceComponentId,
       visibleSymbolLabels,
     }),

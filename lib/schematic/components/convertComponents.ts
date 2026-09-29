@@ -28,6 +28,9 @@ export function convertComponents({
     SourceComponentDesignator,
     string
   >()
+  const sheetRecord = document.records.find(
+    (record) => record.recordKind === "31",
+  )
   for (const [componentIndex, componentRecord] of document.records.entries()) {
     if (!(componentRecord instanceof AltiumSchComponentRecord)) continue
     convertComponent(
@@ -38,6 +41,7 @@ export function convertComponents({
         elements,
         handledRecords,
         options,
+        sheetRecord,
         sourceComponentIdByDesignator,
       },
     )
