@@ -5,7 +5,7 @@
     "": {
       "name": "altium-to-circuit-json",
       "dependencies": {
-        "altiumts": "github:tscircuit/altiumts#5dc7c2afceaf9ca78bcda7f423331c2220327a86",
+        "altiumts": "github:tscircuit/altiumts#8db22cf449c7bf6584a968b4913be4e1bd4a93ad",
         "circuit-json": "0.0.486",
         "format-si-unit": "^0.0.11",
         "schematic-symbols": "^0.0.238",
@@ -452,7 +452,7 @@
 
     "ajv": ["ajv@8.6.3", "", { "dependencies": { "fast-deep-equal": "^3.1.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2", "uri-js": "^4.2.2" } }, "sha512-SMJOdDP6LqTkD0Uq8qLi+gMwSt0imXLSV080qFVwJCpH9U6Mb+SUGHAXM0KNbcBPguytWyvFxcHgMLe2D2XSpw=="],
 
-    "altiumts": ["altiumts@github:tscircuit/altiumts#5dc7c2a", { "dependencies": { "cfb": "^1.2.2", "fflate": "^0.8.3", "transformation-matrix": "^2.16.1" }, "peerDependencies": { "typescript": "^5" }, "bin": { "altiumts": "./dist/cli.js" } }, "tscircuit-altiumts-5dc7c2a", "sha512-4B90BkcdbdVrX1nvyyn5kk3po8tw7p2cvrjzguDXDN7HgYNyrrwr8QZWeddl58SaXMGi11Hyfz7bCE3cBbhoWA=="],
+    "altiumts": ["altiumts@github:tscircuit/altiumts#8db22cf", { "dependencies": { "cfb": "^1.2.2", "fflate": "^0.8.3", "transformation-matrix": "^2.16.1" }, "peerDependencies": { "typescript": "^5" }, "bin": { "altiumts": "./dist/cli.js" } }, "tscircuit-altiumts-8db22cf", "sha512-vfdRjuGEh3kC00gOzWOGIqpwFxMDLqgNO6AbVrdo69BvCTUywHHJLGIThWIpU7rVep0t6OlHIIuodZ+84NFGjQ=="],
 
     "any-promise": ["any-promise@1.3.0", "", {}, "sha512-7UvmKalWRt1wgjL1RrGxoSJW/0QZFIegpeGvZG9kjp8vrRu55XTHbwnqq2GpXm9uLbcuhxm3IqX9OB4MZR1b2A=="],
 

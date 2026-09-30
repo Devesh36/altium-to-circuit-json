@@ -1,7 +1,9 @@
 import {
   type AltiumRecord,
+  AltiumSchArcRecord,
   AltiumSchEllipseRecord,
   AltiumSchEllipticalArcRecord,
+  AltiumSchLineRecord,
   AltiumSchPolygonRecord,
   AltiumSchPolylineRecord,
 } from "altiumts"
@@ -20,20 +22,38 @@ export function convertOwnedCustomComponentBody(
   },
   context: ComponentConversionContext,
 ): AnyCircuitElement[] | undefined {
-  const hasEllipse = records.some(
-    (record) => record instanceof AltiumSchEllipseRecord,
+  const bodyPrimitiveKinds = new Set(
+    records.flatMap((record) => {
+      if (record instanceof AltiumSchEllipseRecord) return ["ellipse"]
+      if (
+        record instanceof AltiumSchArcRecord ||
+        record instanceof AltiumSchEllipticalArcRecord
+      ) {
+        return ["arc"]
+      }
+      if (record instanceof AltiumSchLineRecord) return ["line"]
+      if (
+        record instanceof AltiumSchPolygonRecord ||
+        record instanceof AltiumSchPolylineRecord
+      ) {
+        return ["polygon"]
+      }
+      return []
+    }),
   )
-  const hasEllipticalArc = records.some(
-    (record) => record instanceof AltiumSchEllipticalArcRecord,
-  )
-  const hasPolygon = records.some(
+  const bodyPrimitiveCount = records.filter(
     (record) =>
+      record instanceof AltiumSchEllipseRecord ||
+      record instanceof AltiumSchArcRecord ||
+      record instanceof AltiumSchEllipticalArcRecord ||
+      record instanceof AltiumSchLineRecord ||
       record instanceof AltiumSchPolygonRecord ||
       record instanceof AltiumSchPolylineRecord,
-  )
-  // Keep sparse decorative geometry on the generic-box path. Rich custom
-  // bodies are recognized only when all three primitive families are present.
-  if (!hasEllipse || !hasEllipticalArc || !hasPolygon) return undefined
+  ).length
+  // A lone line or shape can be a decoration on an otherwise rectangular IC.
+  // Multiple primitive kinds are strong evidence that the primitives form the
+  // component body itself, even when it does not use every supported family.
+  if (bodyPrimitiveCount < 3 || bodyPrimitiveKinds.size < 2) return undefined
 
   const ownedElements = convertOwnedComponentRecords(
     {
