@@ -126,7 +126,7 @@ export function convertPcbRecords(context: PcbConversionContext): void {
       if (isOverlayLayer(record.layer)) {
         if (options.includeSilkscreen === false) continue
         if (isHiddenPcbComponentText({ document, record })) continue
-        const text = convertPcbSilkscreenText({ document, record, recordIndex })
+        const text = convertPcbSilkscreenText({ context, record, recordIndex })
         if (text) elements.push(text)
       } else {
         const text = convertPcbCopperText({ layerMap, record, recordIndex })

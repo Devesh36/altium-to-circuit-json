@@ -1,4 +1,9 @@
-import type { AltiumPadRecord, AltiumPcbDocument, AltiumRecord } from "altiumts"
+import type {
+  AltiumPadRecord,
+  AltiumPcbDocument,
+  AltiumPrjPcb,
+  AltiumRecord,
+} from "altiumts"
 import type {
   AnyCircuitElement,
   SourceNet,
@@ -19,6 +24,7 @@ export interface ConvertAltiumPcbDocOptions {
   includeSilkscreen?: boolean
   includeTraces?: boolean
   includeVias?: boolean
+  project?: AltiumPrjPcb
 }
 
 export interface PcbNetContext {

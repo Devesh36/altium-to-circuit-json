@@ -1,29 +1,36 @@
-import type { AltiumPcbDocument, AltiumTextRecord } from "altiumts"
+import type { AltiumTextRecord } from "altiumts"
 import type { PcbSilkscreenText } from "circuit-json"
 import { milsToMillimeters, toMillimeterPoint } from "../geometry"
 import { getPcbComponentIdForRecord } from "../identifiers"
 import { mapOverlayLayer } from "../layers"
+import type { PcbConversionContext } from "../model"
 import { mapTextAnchor } from "../text"
+import { resolvePcbProjectSpecialStrings } from "../text/resolvePcbProjectSpecialStrings"
 
 export function convertPcbSilkscreenText({
-  document,
+  context,
   record,
   recordIndex,
 }: {
-  document: AltiumPcbDocument
+  context: PcbConversionContext
   record: AltiumTextRecord
   recordIndex: number
 }): PcbSilkscreenText | undefined {
   if (!record.position || !record.text) return undefined
 
+  const { document, options } = context
   const component = document.getComponentForRecord(record)
   const specialString = record.text.trim().toLowerCase()
-  const text =
+  const componentText =
     specialString === ".designator"
       ? component?.designator
       : specialString === ".comment"
         ? component?.comment
         : record.text
+  const text = resolvePcbProjectSpecialStrings({
+    project: options.project,
+    text: componentText ?? "",
+  })
   if (!text) return undefined
 
   return {
