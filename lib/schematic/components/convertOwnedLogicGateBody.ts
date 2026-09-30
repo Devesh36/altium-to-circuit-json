@@ -1,6 +1,7 @@
 import type { AltiumRecord, AltiumSchPinRecord } from "altiumts"
 import type { AnyCircuitElement } from "circuit-json"
 import { convertOwnedComponentRecords } from "./convertOwnedComponentRecords"
+import { normalizeLogicGatePinName } from "./normalizeLogicGatePinName"
 import { prepareOwnedComponentBodyElements } from "./prepareOwnedComponentBodyElements"
 import type { ComponentConversionContext, ComponentIdentity } from "./types"
 
@@ -21,7 +22,7 @@ export function convertOwnedLogicGateBody(
   const logicGateLabels = new Set([
     ...visibleSymbolLabels,
     ...pins.flatMap((pin) => {
-      const name = pin.getDecoded("NAME")?.trim().toUpperCase()
+      const name = normalizeLogicGatePinName(pin.getDecoded("NAME"))
       return name ? [name] : []
     }),
   ])
