@@ -4,12 +4,16 @@ import {
   AltiumPolygonRecord,
   type AltiumRecord,
   AltiumRegionRecord,
+  getPcbContour,
+  getPcbRecordPolygonIndex,
+  getPcbRegionGeometry,
 } from "altiumts"
 import type { PcbCopperPour } from "circuit-json"
 import { PcbCopperLayerMap } from "../layers"
 import { convertCopperFill } from "./convertCopperFill"
 import { convertCopperPolygon } from "./convertCopperPolygon"
 import { convertCopperRegion } from "./convertCopperRegion"
+import { isContourInsideContour } from "./isContourInsideContour"
 
 export function convertAltiumCopperAreas(
   document: AltiumPcbDocument,
@@ -21,18 +25,52 @@ export function convertAltiumCopperAreas(
     getSourceNetId?: (record: AltiumRecord) => string | undefined
   } = {},
 ): PcbCopperPour[] {
-  const polygonsWithRegions = new Set(
-    document.records.flatMap((record) => {
-      if (
-        !(record instanceof AltiumRegionRecord) ||
-        record.recordKind !== "Region"
-      ) {
-        return []
+  const polygonsWithCopperRegions = new Set<AltiumPolygonRecord>()
+  const cutoutsByPolygon = new Map<AltiumPolygonRecord, AltiumRegionRecord[]>()
+  const polygonContours = new Map<
+    AltiumPolygonRecord,
+    ReturnType<typeof getPcbContour>
+  >()
+  for (const record of document.records) {
+    if (
+      !(record instanceof AltiumRegionRecord) ||
+      record.recordKind !== "Region"
+    ) {
+      continue
+    }
+    const polygonIndex = getPcbRecordPolygonIndex(document, record)
+    const linkedPolygon = document.getPolygonForRecord(record)
+    if (record.regionKind === "COPPER") {
+      if (linkedPolygon) polygonsWithCopperRegions.add(linkedPolygon)
+    } else if (record.regionKind === "POLYGON_CUTOUT") {
+      const cutoutGeometry = getPcbRegionGeometry(record)
+      const candidatePolygons =
+        polygonIndex === undefined
+          ? document.polygons
+          : linkedPolygon
+            ? [linkedPolygon]
+            : []
+      const polygons = candidatePolygons.filter((polygon) => {
+        if (record.layer !== polygon.layer && record.layer !== "MULTILAYER") {
+          return false
+        }
+        let polygonContour = polygonContours.get(polygon)
+        if (!polygonContour) {
+          polygonContour = getPcbContour(polygon)
+          polygonContours.set(polygon, polygonContour)
+        }
+        return isContourInsideContour({
+          innerContour: cutoutGeometry.outline,
+          outerContour: polygonContour,
+        })
+      })
+      for (const polygon of polygons) {
+        const cutouts = cutoutsByPolygon.get(polygon) ?? []
+        cutouts.push(record)
+        cutoutsByPolygon.set(polygon, cutouts)
       }
-      const polygon = document.getPolygonForRecord(record)
-      return polygon ? [polygon] : []
-    }),
-  )
+    }
+  }
   const polygonIndexes = new Map(
     document.polygons.map((polygon, index) => [polygon, index]),
   )
@@ -51,11 +89,12 @@ export function convertAltiumCopperAreas(
       if (
         record.shelved === true ||
         polygonIndex === undefined ||
-        polygonsWithRegions.has(record)
+        polygonsWithCopperRegions.has(record)
       ) {
         return []
       }
       return convertCopperPolygon({
+        cutouts: cutoutsByPolygon.get(record) ?? [],
         layerMap,
         polygonIndex,
         record,
