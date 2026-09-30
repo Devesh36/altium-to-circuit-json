@@ -32,7 +32,9 @@ test("TI schematic coordinates fit and center on the Circuit JSON sheet", async 
       name: "TI TMDS62LEVM Rev. B — sheet 17",
       outline_color: "#334155",
       schematic_sheet_id: "schematic_sheet_altium",
+      sheet_height: 200,
       sheet_index: 0,
+      sheet_width: 265.7894736842106,
     },
   ])
   expect(
