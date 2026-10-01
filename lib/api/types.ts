@@ -5,6 +5,7 @@ export interface ConvertAltiumSchDocOptions {
   currentDate?: string
   currentTime?: string
   documentName?: string
+  idPrefix?: string
   includeHidden?: boolean
   includeSheetBorder?: boolean
   includeText?: boolean

@@ -14,6 +14,7 @@ export type AltiumSourceType = "auto" | "pcb" | "schematic"
 export type SupportedAltiumDocument = AltiumPcbDocument | AltiumSchDoc
 
 export interface ConvertAltiumToCircuitJsonOptions {
+  idPrefix?: string
   pcb?: ConvertAltiumPcbDocOptions
   schematic?: ConvertAltiumSchDocOptions
   sourceType?: AltiumSourceType

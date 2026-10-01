@@ -2,6 +2,7 @@ import { AltiumSchDoc } from "altiumts"
 import type { AnyCircuitElement } from "circuit-json"
 import { createPcbConversionContext } from "../pcb/context"
 import { createSchematicConversionContext } from "../schematic/document"
+import { PrefixCircuitJsonIdsStage } from "../stages/PrefixCircuitJsonIdsStage"
 import {
   AddPcbNetsStage,
   ConvertPcbBoardStage,
@@ -53,6 +54,11 @@ export class AltiumToCircuitJsonConverter {
         new ConvertRemainingSchematicRecordsStage(document, this.context),
         new FinalizeSchematicConversionStage(document, this.context),
       ]
+      if (options.idPrefix) {
+        this.pipeline.push(
+          new PrefixCircuitJsonIdsStage(document, this.context),
+        )
+      }
       return
     }
 
@@ -69,6 +75,9 @@ export class AltiumToCircuitJsonConverter {
       new ConvertPcbCopperAreasStage(document, this.context),
       new ConvertPcbRecordsStage(document, this.context),
     ]
+    if (options.idPrefix) {
+      this.pipeline.push(new PrefixCircuitJsonIdsStage(document, this.context))
+    }
   }
 
   get currentStage():

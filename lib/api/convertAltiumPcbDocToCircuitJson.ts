@@ -7,7 +7,11 @@ export function convertAltiumPcbDocToCircuitJson(
   document: AltiumPcbDocument,
   options: ConvertAltiumPcbDocOptions = {},
 ): AnyCircuitElement[] {
-  const converter = new AltiumToCircuitJsonConverter(document, { pcb: options })
+  const { idPrefix, ...pcbOptions } = options
+  const converter = new AltiumToCircuitJsonConverter(document, {
+    idPrefix,
+    pcb: pcbOptions,
+  })
   converter.runUntilFinished()
   return converter.getOutput()
 }

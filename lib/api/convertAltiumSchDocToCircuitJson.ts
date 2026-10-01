@@ -7,8 +7,10 @@ export function convertAltiumSchDocToCircuitJson(
   document: AltiumSchDoc,
   options: ConvertAltiumSchDocOptions = {},
 ): AnyCircuitElement[] {
+  const { idPrefix, ...schematicOptions } = options
   const converter = new AltiumToCircuitJsonConverter(document, {
-    schematic: options,
+    idPrefix,
+    schematic: schematicOptions,
   })
   converter.runUntilFinished()
   return converter.getOutput()

@@ -32,6 +32,20 @@ const document = parseAltiumSchDoc(schematicBytes)
 const circuitJson = convertAltiumSchDocToCircuitJson(document)
 ```
 
+When outputs from separate Altium documents will be combined, give each
+document a stable `idPrefix`. The converter applies it to every Circuit JSON ID
+and reference, so record numbers reused by a PCB and its schematic cannot
+collide:
+
+```ts
+const circuitJson = [
+  ...convertAltiumPcbDocToCircuitJson(pcbDocument, { idPrefix: "board" }),
+  ...convertAltiumSchDocToCircuitJson(schematicDocument, {
+    idPrefix: "schematic_1",
+  }),
+]
+```
+
 The public conversion functions are:
 
 - `convertAltiumToCircuitJson(source, options)` for automatic parsing and conversion.
