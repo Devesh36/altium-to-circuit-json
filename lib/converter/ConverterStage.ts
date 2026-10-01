@@ -1,13 +1,17 @@
 import type { AltiumToCircuitJsonConverterContext } from "./types"
 
-export abstract class ConverterStage<Input, Output> {
+export abstract class ConverterStage<
+  Input,
+  Output,
+  Context = AltiumToCircuitJsonConverterContext,
+> {
   readonly input: Input
-  readonly context: AltiumToCircuitJsonConverterContext
+  readonly context: Context
   readonly maxIterations = 1_000
   iteration = 0
   finished = false
 
-  constructor(input: Input, context: AltiumToCircuitJsonConverterContext) {
+  constructor(input: Input, context: Context) {
     this.input = input
     this.context = context
   }
