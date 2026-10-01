@@ -5,6 +5,7 @@ import {
 } from "altiumts"
 import type { AnyCircuitElement } from "circuit-json"
 import type { SchematicContext } from "../document"
+import { scaleLength } from "../geometry"
 import { convertSchematicRecord } from "../rendering/convertSchematicRecord"
 import type { ComponentConversionContext } from "./types"
 
@@ -44,13 +45,24 @@ export function convertOwnedComponentRecords(
       },
       renderingContext,
     )
-    return elements.map((element) =>
-      element.type === "schematic_text"
-        ? element
+    return elements.map((element) => {
+      const preparedElement =
+        record instanceof AltiumSchPinRecord &&
+        element.type === "schematic_line"
+          ? {
+              ...element,
+              stroke_width: Math.max(
+                scaleLength(1, renderingContext.scale),
+                0.05,
+              ),
+            }
+          : element
+      return preparedElement.type === "schematic_text"
+        ? preparedElement
         : {
-            ...element,
+            ...preparedElement,
             schematic_component_id: schematicComponentId,
-          },
-    )
+          }
+    })
   })
 }
