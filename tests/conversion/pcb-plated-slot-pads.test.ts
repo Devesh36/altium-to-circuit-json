@@ -98,3 +98,17 @@ test("calculates a slotted pad's hole offset only in the slot converter", () => 
   expect(actual).toEqual(expected)
   expect(offsetReads).toBe(1)
 })
+
+test.each([0, 360, -360])(
+  "keeps a centered oval slot with %s degrees of relative rotation as a pill",
+  (holeCcwRotationDegrees) => {
+    const document = parseAltiumPcbDoc(
+      `|RECORD=Board|SHEETWIDTH=400mil|SHEETHEIGHT=300mil\n|RECORD=Pad|NAME=1|LAYER=MULTILAYER|X=100mil|Y=100mil|XSIZE=100mil|YSIZE=60mil|SHAPE=ROUND|HOLESIZE=30mil|HOLETYPE=2|SLOTLENGTH=70mil|ROTATION=45|HOLEROTATION=${holeCcwRotationDegrees}|PLATED=TRUE`,
+    )
+    expect(
+      convertAltiumPcbDocToCircuitJson(document).find(
+        (element) => element.type === "pcb_plated_hole",
+      ),
+    ).toEqual(expect.objectContaining({ shape: "pill", ccw_rotation: 45 }))
+  },
+)
