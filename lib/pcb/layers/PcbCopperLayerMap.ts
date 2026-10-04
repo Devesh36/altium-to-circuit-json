@@ -1,6 +1,7 @@
 import type { AltiumPcbDocument } from "altiumts"
 import type { LayerRef } from "circuit-json"
 import { INNER_LAYERS } from "./constants"
+import { getAltiumPcbLayerDisplayName } from "./getAltiumPcbLayerDisplayName"
 import { getCopperLayerIdentity } from "./getCopperLayerIdentity"
 import { getCopperStackEntryKeys } from "./getCopperStackEntryKeys"
 import { getOrderedCopperStackEntries } from "./getOrderedCopperStackEntries"
@@ -8,7 +9,11 @@ import { normalizeLayer } from "./normalizeLayer"
 
 export class PcbCopperLayerMap {
   readonly layers: LayerRef[]
-  private readonly mappings: Array<{ keys: string[]; layer: LayerRef }> = []
+  private readonly mappings: Array<{
+    displayName: string
+    keys: string[]
+    layer: LayerRef
+  }> = []
 
   constructor(document: AltiumPcbDocument) {
     const entries = getOrderedCopperStackEntries(document)
@@ -20,8 +25,8 @@ export class PcbCopperLayerMap {
     if (entries.length === 0) {
       this.layers = ["top", "bottom"]
       this.mappings.push(
-        { keys: ["TOP"], layer: "top" },
-        { keys: ["BOTTOM"], layer: "bottom" },
+        { displayName: "Top Layer", keys: ["TOP"], layer: "top" },
+        { displayName: "Bottom Layer", keys: ["BOTTOM"], layer: "bottom" },
       )
       return
     }
@@ -49,7 +54,10 @@ export class PcbCopperLayerMap {
           )
         }
       }
-      this.mappings.push({ keys, layer })
+      const displayName =
+        entry.name?.trim() || getAltiumPcbLayerDisplayName(entry.layerId)
+      if (!displayName) throw new Error("Copper board stack layer has no name")
+      this.mappings.push({ displayName, keys, layer })
     }
   }
 
@@ -64,5 +72,12 @@ export class PcbCopperLayerMap {
       )
     }
     return undefined
+  }
+
+  getDisplayName(layer: string | undefined): string | undefined {
+    const identity = getCopperLayerIdentity(layer)
+    const key = identity ?? normalizeLayer(layer)
+    return this.mappings.find((mapping) => mapping.keys.includes(key))
+      ?.displayName
   }
 }

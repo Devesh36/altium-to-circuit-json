@@ -5,7 +5,7 @@ import { getPcbComponentIdForRecord } from "../identifiers"
 import { mapOverlayLayer } from "../layers"
 import type { PcbConversionContext } from "../model"
 import { mapTextAnchor } from "../text"
-import { resolvePcbProjectSpecialStrings } from "../text/resolvePcbProjectSpecialStrings"
+import { resolvePcbTextSpecialStrings } from "../text/resolvePcbTextSpecialStrings"
 
 export function convertPcbSilkscreenText({
   context,
@@ -18,7 +18,7 @@ export function convertPcbSilkscreenText({
 }): PcbSilkscreenText | undefined {
   if (!record.position || !record.text) return undefined
 
-  const { document, options } = context
+  const { document, layerMap, options } = context
   const component = document.getComponentForRecord(record)
   const specialString = record.text.trim().toLowerCase()
   const componentText =
@@ -27,7 +27,9 @@ export function convertPcbSilkscreenText({
       : specialString === ".comment"
         ? component?.comment
         : record.text
-  const text = resolvePcbProjectSpecialStrings({
+  const text = resolvePcbTextSpecialStrings({
+    layer: record.layer,
+    layerMap,
     project: options.project,
     text: componentText ?? "",
   })

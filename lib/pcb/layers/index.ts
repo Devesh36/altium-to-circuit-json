@@ -1,4 +1,5 @@
 export * from "./constants"
+export * from "./getAltiumPcbLayerDisplayName"
 export * from "./getRecordLayer"
 export * from "./isCourtyardLayer"
 export * from "./isKeepoutLayer"

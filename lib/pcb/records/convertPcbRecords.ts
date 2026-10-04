@@ -129,7 +129,7 @@ export function convertPcbRecords(context: PcbConversionContext): void {
         const text = convertPcbSilkscreenText({ context, record, recordIndex })
         if (text) elements.push(text)
       } else {
-        const text = convertPcbCopperText({ layerMap, record, recordIndex })
+        const text = convertPcbCopperText({ context, record, recordIndex })
         if (text) elements.push(text)
       }
       continue

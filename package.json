@@ -36,6 +36,7 @@
     "format:check": "biome format .",
     "lint": "biome check .",
     "prepack": "bun run build",
+    "prepare": "bun run scripts/prepare-git-dependency.ts",
     "test": "bun run download-references && bun test",
     "test:update-svg": "bun run download-references && BUN_UPDATE_SNAPSHOTS=1 bun test tests/svg",
     "typecheck": "bunx tsc --noEmit",
