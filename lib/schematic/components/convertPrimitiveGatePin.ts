@@ -107,7 +107,8 @@ export function convertPrimitiveGatePin(
   return elements.map((element) =>
     element.type === "schematic_line" ||
     element.type === "schematic_circle" ||
-    element.type === "schematic_path"
+    element.type === "schematic_path" ||
+    element.type === "schematic_text"
       ? {
           ...element,
           schematic_component_id: port.schematicPort.schematic_component_id,

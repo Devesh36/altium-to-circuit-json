@@ -36,6 +36,7 @@ test("preserves pinless component graphics on the TI mounting hardware sheet", a
     circuitJson.some(
       (element) =>
         element.type !== "schematic_component" &&
+        element.type !== "schematic_text" &&
         "schematic_component_id" in element &&
         element.schematic_component_id === component.schematic_component_id,
     ),

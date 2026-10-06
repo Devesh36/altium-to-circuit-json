@@ -47,7 +47,7 @@ export function createNumericPinDesignatorText({
     font_size: Math.max(scaleLength(1.5, scale), 0.15),
     position,
     rotation: side === "top" || side === "bottom" ? -90 : 0,
-    // Primitive component bodies render their text as sheet-level elements.
+    schematic_component_id: schematicPort.schematic_component_id,
     schematic_sheet_id: schematicPort.schematic_sheet_id,
     schematic_text_id: `schematic_pin_designator_altium_${recordIndex}`,
     text: designator,

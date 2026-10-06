@@ -105,7 +105,12 @@ test("preserves custom TI logic-gate bodies instead of generic boxes", async () 
   expect(numericPinDesignators).toHaveLength(10)
   expect(
     numericPinDesignators.every(
-      (element) => element.schematic_component_id === undefined,
+      (element) =>
+        element.schematic_component_id !== undefined &&
+        gateComponents.some(
+          (component) =>
+            component.schematic_component_id === element.schematic_component_id,
+        ),
     ),
   ).toBe(true)
 

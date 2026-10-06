@@ -57,12 +57,10 @@ export function convertOwnedComponentRecords(
               ),
             }
           : element
-      return preparedElement.type === "schematic_text"
-        ? preparedElement
-        : {
-            ...preparedElement,
-            schematic_component_id: schematicComponentId,
-          }
+      return {
+        ...preparedElement,
+        schematic_component_id: schematicComponentId,
+      }
     })
   })
 }
