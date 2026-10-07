@@ -1,4 +1,7 @@
-import type { AltiumRecord } from "altiumts"
+import {
+  type AltiumRecord,
+  AltiumSchImplementationParameterRecord,
+} from "altiumts"
 import type { SchematicContext } from "./types"
 
 export function shouldRenderSchematicRecord(
@@ -14,6 +17,7 @@ export function shouldRenderSchematicRecord(
     visited.add(current)
     const parent = context.document.getParent(current)
     if (!parent) return true
+    if (parent instanceof AltiumSchImplementationParameterRecord) return false
 
     if (ownerPartId === undefined || ownerPartId <= 0) {
       ownerPartId = current.getNumber("OWNERPARTID")
