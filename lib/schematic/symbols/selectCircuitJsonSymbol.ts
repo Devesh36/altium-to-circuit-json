@@ -8,15 +8,21 @@ import { hasCompleteMosfetFunctionalGroups } from "./hasCompleteMosfetFunctional
 import { isPolarizedCapacitor } from "./isPolarizedCapacitor"
 
 export function selectCircuitJsonSymbol({
+  description,
   designator,
   libraryReference,
   ports,
 }: {
+  description?: string
   designator: string
   libraryReference: string
   ports: ConvertedPort[]
 }): SymbolSelection | undefined {
-  const classification = classifyComponent({ designator, libraryReference })
+  const classification = classifyComponent({
+    description,
+    designator,
+    libraryReference,
+  })
   let baseName: string | undefined
   let candidateNames: string[] = []
   if (classification === "testpoint" && ports.length === 1) {

@@ -79,8 +79,7 @@ export function convertComponent(
     componentPorts.map(({ point }) => point),
   )
   const symbolSelection = selectCircuitJsonSymbol({
-    designator: identity.designator,
-    libraryReference: identity.libraryReference,
+    ...identity,
     ports: componentPorts,
   })
   const singleInputGateBody = symbolSelection

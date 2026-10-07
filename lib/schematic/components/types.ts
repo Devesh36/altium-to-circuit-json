@@ -17,6 +17,7 @@ export interface ComponentConversionContext {
 }
 
 export interface ComponentIdentity {
+  description?: string
   designator: string
   displayText: string
   libraryReference: string

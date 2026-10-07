@@ -1,9 +1,11 @@
 import type { ComponentClassification } from "./types"
 
 export function classifyComponent({
+  description,
   designator,
   libraryReference,
 }: {
+  description?: string
   designator: string
   libraryReference: string
 }): ComponentClassification {
@@ -34,6 +36,15 @@ export function classifyComponent({
     return "capacitor"
   }
   if (prefix === "L" || lowerReference.includes("inductor")) return "inductor"
-  if (prefix === "D" || lowerReference.includes("diode")) return "diode"
+  if (prefix === "D" || lowerReference.includes("diode")) {
+    if (
+      /^\s*(?:led\b(?!\s+(?:driver|controller)\b)|light[\s-]+emitting[\s-]+diode\b)/iu.test(
+        description ?? "",
+      )
+    ) {
+      return "led"
+    }
+    return "diode"
+  }
   return "unknown"
 }
