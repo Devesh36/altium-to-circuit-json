@@ -20,14 +20,12 @@ export async function createOpenSourceSchematicComparison({
   filename,
   projectFilename,
   schematicName,
-  source: providedSource,
 }: {
   filename: string
   projectFilename?: string
   schematicName: string
-  source?: Uint8Array
 }): Promise<OpenSourceSchematicComparison> {
-  const source = providedSource ?? (await readReferenceBytes(filename))
+  const source = await readReferenceBytes(filename)
   const document = parseAltiumSchDoc(source)
   let project: AltiumPrjPcb | undefined
   if (projectFilename) {
