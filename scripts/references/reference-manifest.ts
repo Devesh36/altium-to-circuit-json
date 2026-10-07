@@ -76,6 +76,12 @@ export const TI_EVM_REFERENCE_FILENAMES = {
 
 export const DIRECT_REFERENCES: DirectReferenceSpec[] = [
   {
+    filename: "arduino-uno.SchDoc",
+    sha256: "f8fcef42c18d2ebdf0409eb2af1363d6c83ab8aa80e790df153de192b8941f6e",
+    source: "nihal-sahu/arduino-model@a739915006d451f5f072cb9b1e0803fc5f2ea241",
+    url: "https://raw.githubusercontent.com/nihal-sahu/arduino-model/a739915006d451f5f072cb9b1e0803fc5f2ea241/Arduino_Schematic.SchDoc",
+  },
+  {
     filename: "ch582.PcbDoc",
     sha256: "dcf82249e19f9a58f3874e9c56509bab42f3fdf00dc3dd0d52ba9a4f4aeb0649",
     source:
