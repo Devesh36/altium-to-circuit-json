@@ -32,7 +32,7 @@ test("Arduino Uno full schematic source and conversion", async () => {
   await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
 })
 
-test.failing("preserves all six Arduino circular component bodies", () => {
+test("preserves all six Arduino circular component bodies", () => {
   for (const name of ["MH1", "MH2", "MH3", "MH4", "J8", "J9"]) {
     const sourceComponent = circuitJson
       .filter((element) => element.type === "source_component")

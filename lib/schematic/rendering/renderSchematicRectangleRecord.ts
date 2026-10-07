@@ -1,6 +1,11 @@
-import type { AnyCircuitElement, SchematicRect } from "circuit-json"
+import type {
+  AnyCircuitElement,
+  SchematicCircle,
+  SchematicRect,
+} from "circuit-json"
 import { SCHEMATIC_SHEET_ID } from "../document"
 import { getRectangle, scaleLength, scalePoint } from "../geometry"
+import { getRoundedRectangleCircle } from "../geometry/getRoundedRectangleCircle"
 import { altiumColorToCss } from "../text"
 import type { PrimitiveRenderOptions } from "./types"
 
@@ -14,6 +19,26 @@ export function renderSchematicRectangleRecord({
   if (record.recordKind !== "10" && record.recordKind !== "14") return undefined
   const rectangle = getRectangle(record)
   if (!rectangle) return []
+  const circle = getRoundedRectangleCircle(record)
+  if (circle) {
+    return [
+      {
+        type: "schematic_circle",
+        schematic_circle_id: `schematic_circle_altium_${index}`,
+        schematic_sheet_id: SCHEMATIC_SHEET_ID,
+        center: scalePoint(circle.center, context.scale),
+        radius: scaleLength(circle.radius, context.scale),
+        stroke_width: strokeWidth,
+        color,
+        is_filled: record.getBoolean("ISSOLID") === true,
+        fill_color: altiumColorToCss(
+          record.getCaseInsensitive("AREACOLOR"),
+          "#ffffff",
+        ),
+        is_dashed: false,
+      } satisfies SchematicCircle,
+    ]
+  }
   return [
     {
       type: "schematic_rect",
