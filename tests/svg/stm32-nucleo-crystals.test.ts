@@ -9,6 +9,7 @@ import {
 } from "altiumts"
 import { convertAltiumToCircuitJson } from "../../lib"
 import { classifyComponent } from "../../lib/schematic/symbols/classifyComponent"
+import { convertSingleSchematicComponent } from "../helpers/convert-single-schematic-component"
 import { expectValidImportedSchematic } from "../helpers/expect-valid-imported-schematic"
 import { renderImportedSchematicToSvg } from "../helpers/render-imported-schematic"
 import { stackAltiumAndCircuitJsonSvgs } from "../helpers/stack-svg-comparison"
@@ -42,7 +43,7 @@ test("STM32 Nucleo full MCU schematic source and conversion", async () => {
   await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
 })
 
-test.failing("preserves X2 crystal graphics and all four pins", () => {
+test("preserves X2 crystal graphics and all four pins", () => {
   const sourceComponent = circuitJson
     .filter((element) => element.type === "source_component")
     .find((element) => element.name === "X2")
@@ -89,8 +90,26 @@ test.failing("preserves X2 crystal graphics and all four pins", () => {
   ).toEqual([1, 2, 3, 4])
 })
 
-test.failing("recognizes the XTAL library used by Nucleo X1", () => {
+test("recognizes the XTAL library used by Nucleo X1", () => {
   expect(
     classifyComponent({ designator: "X1", libraryReference: "XTAL" }),
   ).toBe("crystal")
+  const crystal = convertSingleSchematicComponent({
+    comment: "8MHz",
+    displayText: "8MHz",
+    designator: "X1",
+    libraryReference: "XTAL",
+  })
+  const component = crystal.find(
+    (element) => element.type === "schematic_component",
+  )
+  expect([
+    "crystal_left",
+    "crystal_right",
+    "crystal_up",
+    "crystal_down",
+  ]).toContain(component?.symbol_name ?? "")
+  expect(
+    crystal.filter((element) => element.type === "schematic_port"),
+  ).toHaveLength(2)
 })

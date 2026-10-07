@@ -36,6 +36,12 @@ export function convertOwnedCustomComponentBody(
       }
       if (record instanceof AltiumSchLineRecord) return ["line"]
       if (
+        record instanceof AltiumSchRectangleRecord ||
+        record instanceof AltiumSchRoundedRectangleRecord
+      ) {
+        return ["rectangle"]
+      }
+      if (
         record instanceof AltiumSchPolygonRecord ||
         record instanceof AltiumSchPolylineRecord
       ) {
