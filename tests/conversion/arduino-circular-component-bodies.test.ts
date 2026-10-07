@@ -16,7 +16,7 @@ async function convertArduino() {
   )
 }
 
-test.failing("preserves all six Arduino circular component bodies", async () => {
+test("preserves all six Arduino circular component bodies", async () => {
   const circuitJson = await convertArduino()
   for (const name of ARDUINO_CIRCULAR_COMPONENT_NAMES) {
     const component = findArduinoComponent(circuitJson, name)
