@@ -72,7 +72,7 @@ test.failing("preserves X2 crystal graphics and all four pins", () => {
         (element) =>
           element.type === "schematic_line" &&
           element.schematic_line_id ===
-            `schematic_line_altium_${document.records.indexOf(line)}` &&
+            `schematic_line_altium_${document.records.indexOf(line)}_line` &&
           element.schematic_component_id === component?.schematic_component_id,
       ),
     ).toBeDefined()
