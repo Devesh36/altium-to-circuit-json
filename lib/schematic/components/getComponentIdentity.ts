@@ -57,6 +57,7 @@ export function getComponentIdentity(
   }
 
   return {
+    description: componentRecord.getCaseInsensitive("COMPONENTDESCRIPTION"),
     designator,
     displayText,
     libraryReference,

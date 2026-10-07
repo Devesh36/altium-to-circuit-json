@@ -15,6 +15,7 @@ import {
 import { parseFiniteComponentRating } from "./parseFiniteComponentRating"
 
 export function createSourceComponent({
+  description,
   displayText,
   designator,
   libraryReference,
@@ -22,6 +23,7 @@ export function createSourceComponent({
   pinCount,
   sourceComponentId,
 }: {
+  description?: string
   displayText: string
   designator: string
   libraryReference: string
@@ -29,7 +31,11 @@ export function createSourceComponent({
   pinCount: number
   sourceComponentId: string
 }): AnyCircuitElement {
-  const classification = classifyComponent({ designator, libraryReference })
+  const classification = classifyComponent({
+    description,
+    designator,
+    libraryReference,
+  })
   const primaryComponentText = getPrimaryComponentText(displayText)
   const common = {
     type: "source_component" as const,
