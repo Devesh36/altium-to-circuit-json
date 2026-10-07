@@ -4,14 +4,13 @@ import { any_circuit_element } from "circuit-json"
 import { convertAltiumSchDocToCircuitJson } from "../../lib"
 import {
   ARDUINO_CIRCULAR_COMPONENT_NAMES,
-  ARDUINO_SCHEMATIC_FILENAME,
   findArduinoComponent,
+  readArduinoSchematicBytes,
 } from "../helpers/create-arduino-circular-symbols-comparison"
-import { readReferenceBytes } from "../helpers/read-reference"
 
 async function convertArduino() {
   return convertAltiumSchDocToCircuitJson(
-    parseAltiumSchDoc(await readReferenceBytes(ARDUINO_SCHEMATIC_FILENAME)),
+    parseAltiumSchDoc(await readArduinoSchematicBytes()),
     { centerOnSchematicSheet: false, schematicUnitScale: 0.05 },
   )
 }
