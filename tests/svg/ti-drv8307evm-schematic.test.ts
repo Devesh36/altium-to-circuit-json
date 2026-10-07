@@ -27,7 +27,9 @@ test(
             sourceComponent?.source_component_id,
         )
       expect(sourceComponent?.ftype).toBe("simple_led")
-      expect(component?.symbol_name).toMatch(/^led_(left|right|up|down)$/u)
+      expect(["led_left", "led_right", "led_up", "led_down"]).toContain(
+        component?.symbol_name ?? "",
+      )
       expect(
         circuitJson.filter(
           (element) =>

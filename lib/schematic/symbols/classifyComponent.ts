@@ -37,10 +37,17 @@ export function classifyComponent({
   }
   if (prefix === "L" || lowerReference.includes("inductor")) return "inductor"
   if (prefix === "D" || lowerReference.includes("diode")) {
+    const [firstWord, secondWord, thirdWord] = (description ?? "")
+      .trim()
+      .toLowerCase()
+      .split(/\W+/u)
     if (
-      /^\s*(?:led\b(?!\s+(?:driver|controller)\b)|light[\s-]+emitting[\s-]+diode\b)/iu.test(
-        description ?? "",
-      )
+      (firstWord === "led" &&
+        secondWord !== "driver" &&
+        secondWord !== "controller") ||
+      (firstWord === "light" &&
+        secondWord === "emitting" &&
+        thirdWord === "diode")
     ) {
       return "led"
     }
