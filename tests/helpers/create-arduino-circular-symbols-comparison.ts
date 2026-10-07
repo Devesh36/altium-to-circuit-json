@@ -1,9 +1,7 @@
-import { parseAltiumSchDoc, serializeAltiumSheetToSvg } from "altiumts"
+import { readFile } from "node:fs/promises"
+import { resolve } from "node:path"
 import type { AnyCircuitElement, SchematicComponent } from "circuit-json"
-import { convertAltiumSchDocToCircuitJson } from "../../lib"
-import { readReferenceBytes } from "./read-reference"
-import { renderImportedSchematicToSvg } from "./render-imported-schematic"
-import { stackAltiumAndCircuitJsonSvgs } from "./stack-svg-comparison"
+import { createOpenSourceSchematicComparison } from "./create-open-source-schematic-comparison"
 
 export const ARDUINO_SCHEMATIC_FILENAME = "arduino-uno.SchDoc"
 export const ARDUINO_CIRCULAR_COMPONENT_NAMES = [
@@ -36,39 +34,18 @@ export function findArduinoComponent(
   return component
 }
 
-export async function createArduinoMountingHoleComparison(): Promise<string> {
-  const document = parseAltiumSchDoc(
-    await readReferenceBytes(ARDUINO_SCHEMATIC_FILENAME),
-  )
-  // Convert the complete sheet, then isolate the four component bodies for a
-  // readable detail alongside the separate full-sheet snapshot.
-  const circuitJson = convertAltiumSchDocToCircuitJson(document, {
-    centerOnSchematicSheet: false,
-    schematicUnitScale: 0.05,
-  })
-  const ids = new Set(
-    ARDUINO_CIRCULAR_COMPONENT_NAMES.slice(0, 4).map(
-      (name) => findArduinoComponent(circuitJson, name).schematic_component_id,
+export async function readArduinoSchematicBytes(): Promise<Uint8Array> {
+  return new Uint8Array(
+    await readFile(
+      resolve(import.meta.dir, "../fixtures", ARDUINO_SCHEMATIC_FILENAME),
     ),
   )
-  const detail = circuitJson.filter(
-    (element) =>
-      "schematic_component_id" in element &&
-      element.schematic_component_id !== undefined &&
-      ids.has(element.schematic_component_id),
-  )
-  return stackAltiumAndCircuitJsonSvgs({
-    altiumSvg: serializeAltiumSheetToSvg(document, {
-      width: 800,
-      height: 400,
-      showBorder: false,
-      viewBox: { x: 1985, y: 795, width: 175, height: 85 },
-    }),
-    circuitJsonSvg: renderImportedSchematicToSvg(detail, {
-      width: 800,
-      height: 400,
-      includeVersion: false,
-    }),
-    label: "Arduino Uno MH1-MH4 circular component bodies",
+}
+
+export async function createArduinoSchematicComparison() {
+  return createOpenSourceSchematicComparison({
+    filename: ARDUINO_SCHEMATIC_FILENAME,
+    schematicName: "Arduino Uno",
+    source: await readArduinoSchematicBytes(),
   })
 }
