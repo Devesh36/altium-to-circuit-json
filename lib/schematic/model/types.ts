@@ -14,6 +14,7 @@ export interface SemanticSchematicOptions extends ConvertAltiumSchDocOptions {
 }
 
 export interface SemanticSchematicConversion {
+  convertedPorts: ConvertedPort[]
   elements: AnyCircuitElement[]
   handledRecords: Set<AltiumRecord>
 }

@@ -43,5 +43,5 @@ export function convertSemanticSchematic(
     options,
   })
 
-  return { elements, handledRecords }
+  return { convertedPorts, elements, handledRecords }
 }

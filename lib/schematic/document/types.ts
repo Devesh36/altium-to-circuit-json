@@ -1,8 +1,10 @@
 import type { AltiumRecord, AltiumSchDoc } from "altiumts"
 import type { AnyCircuitElement } from "circuit-json"
 import type { ConvertAltiumSchDocOptions } from "../../api"
+import type { ConvertedPort } from "../model"
 
 export interface SchematicConversionContext extends SchematicContext {
+  convertedPorts: ConvertedPort[]
   elements: AnyCircuitElement[]
   handledRecords: Set<AltiumRecord>
   options: ConvertAltiumSchDocOptions

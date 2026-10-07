@@ -19,6 +19,7 @@ export function createSchematicConversionContext({
     throw new RangeError("schematicUnitScale must be a positive finite number")
   }
   return {
+    convertedPorts: [],
     document,
     elements: [],
     handledRecords: new Set(),

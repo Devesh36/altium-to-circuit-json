@@ -11,6 +11,7 @@ export function convertSchematicSemantics(
     scale: context.scale,
     schematicSheetId: SCHEMATIC_SHEET_ID,
   })
+  context.convertedPorts.push(...conversion.convertedPorts)
   context.elements.push(...conversion.elements)
   for (const record of conversion.handledRecords) {
     if (record instanceof AltiumSchImageRecord) continue
