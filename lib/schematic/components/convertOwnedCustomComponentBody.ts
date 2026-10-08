@@ -35,12 +35,10 @@ export function convertOwnedCustomComponentBody(
         return ["arc"]
       }
       if (record instanceof AltiumSchLineRecord) return ["line"]
-      if (
-        record instanceof AltiumSchPolygonRecord ||
-        record instanceof AltiumSchPolylineRecord
-      ) {
-        return ["polygon"]
-      }
+      // A closed polygon and open polylines can form a complete body (for
+      // example, a shunt reference's triangle, cathode bar, and reference lead).
+      if (record instanceof AltiumSchPolygonRecord) return ["polygon"]
+      if (record instanceof AltiumSchPolylineRecord) return ["polyline"]
       return []
     }),
   )
