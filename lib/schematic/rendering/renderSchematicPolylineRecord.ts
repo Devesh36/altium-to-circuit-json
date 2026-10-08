@@ -5,7 +5,7 @@ import type {
   SchematicTrace,
 } from "circuit-json"
 import { SCHEMATIC_SHEET_ID } from "../document"
-import { scalePoint } from "../geometry"
+import { pointsEqual, scalePoint } from "../geometry"
 import { altiumColorToCss } from "../text"
 import type { PrimitiveRenderOptions } from "./types"
 
@@ -36,6 +36,17 @@ export function renderSchematicPolylineRecord({
       } satisfies SchematicTrace,
     ]
   }
+  const isFilled = kind === "7" && record.getBoolean("ISSOLID") === true
+  const firstPoint = points[0]
+  // An unfilled polygon still has a closed outline; schematic paths are open.
+  if (
+    kind === "7" &&
+    !isFilled &&
+    firstPoint &&
+    !pointsEqual(firstPoint, points.at(-1))
+  ) {
+    points.push(firstPoint)
+  }
   return [
     {
       type: "schematic_path",
@@ -51,7 +62,7 @@ export function renderSchematicPolylineRecord({
               "transparent",
             )
           : undefined,
-      is_filled: kind === "7",
+      is_filled: isFilled,
       is_dashed: false,
     } satisfies SchematicPath,
   ]
