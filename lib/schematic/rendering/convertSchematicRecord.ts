@@ -29,9 +29,13 @@ export function convertSchematicRecord(
   const color = altiumColorToCss(record.getCaseInsensitive("COLOR"), "#1f2937")
   // Altium TSize widths are hairline, 10, 30 and 50 mils; one schematic
   // unit is 10 mils. Represent hairlines with one source unit because Circuit
-  // JSON has no device-pixel width. Scale strokes with the geometry.
+  // JSON has no device-pixel width. Buses use 20, 30, 50 and 70 mils.
+  // Scale strokes with the geometry.
   const widthEnum = record.getNumber("LINEWIDTH") ?? 0
-  const strokeWidth = scaleLength([1, 1, 3, 5][widthEnum] ?? 1, scale)
+  const strokeWidth = scaleLength(
+    (kind === "26" ? [2, 3, 5, 7] : [1, 1, 3, 5])[widthEnum] ?? 1,
+    scale,
+  )
 
   if (record instanceof AltiumSchImageRecord) {
     return renderSchematicImageRecord({ context, index, record })

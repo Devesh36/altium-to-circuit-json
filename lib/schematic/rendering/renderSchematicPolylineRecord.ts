@@ -17,7 +17,9 @@ export function renderSchematicPolylineRecord({
   strokeWidth,
 }: PrimitiveRenderOptions): AnyCircuitElement[] | undefined {
   const kind = record.recordKind
-  if (kind !== "27" && kind !== "6" && kind !== "7") return undefined
+  if (kind !== "27" && kind !== "26" && kind !== "6" && kind !== "7") {
+    return undefined
+  }
   const points = getSchematicRecordPoints(record).map((point) =>
     scalePoint(point, context.scale),
   )
