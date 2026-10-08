@@ -11,6 +11,7 @@ import { convertMarkedCapacitorBody } from "./convertMarkedCapacitorBody"
 import { convertOwnedComponentBody } from "./convertOwnedComponentBody"
 import { convertOwnedSingleInputGateBody } from "./convertOwnedSingleInputGateBody"
 import { convertPinlessComponent } from "./convertPinlessComponent"
+import { convertRotatedResistorBody } from "./convertRotatedResistorBody"
 import { createComponentPinEdgeElements } from "./createComponentPinEdgeElements"
 import { createSourceComponent } from "./createSourceComponent"
 import { getComponentBodyBounds } from "./getComponentBodyBounds"
@@ -89,6 +90,11 @@ export function convertComponent(
     context,
   )
   if (polarizedCapacitorBody) symbolSelection = undefined
+  const rotatedResistorBody = convertRotatedResistorBody(
+    { identity, pins, records: visibleOwnedRecords, symbolSelection },
+    context,
+  )
+  if (rotatedResistorBody) symbolSelection = undefined
   const singleInputGateBody = symbolSelection
     ? undefined
     : convertOwnedSingleInputGateBody(
@@ -97,6 +103,7 @@ export function convertComponent(
       )
   const ownedComponentBody =
     polarizedCapacitorBody ??
+    rotatedResistorBody ??
     singleInputGateBody ??
     (symbolSelection
       ? undefined

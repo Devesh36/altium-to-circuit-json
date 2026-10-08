@@ -73,11 +73,18 @@ export function convertOwnedCustomComponentBody(
   // mounting hole. Do not mistake a circle decorating a rectangular IC for
   // its body. Keep the existing evidence threshold for other custom graphics.
   const hasSimpleCircularBody = hasCircularShape && !hasOtherBodyShape
+  // DIP-switch actuators can be drawn entirely from rectangles. Preserve the
+  // enclosure and internal rectangles instead of replacing them with a box.
+  const hasSwitchBody =
+    /^SW\d/iu.test(identity.designator) &&
+    records.filter((record) => record instanceof AltiumSchRectangleRecord)
+      .length > 1
   // A lone line or shape can be a decoration on an otherwise rectangular IC.
   // Multiple primitive kinds are strong evidence that the primitives form the
   // component body itself, even when it does not use every supported family.
   if (
     !hasSimpleCircularBody &&
+    !hasSwitchBody &&
     (bodyPrimitiveCount < 3 || bodyPrimitiveKinds.size < 2)
   ) {
     return undefined
