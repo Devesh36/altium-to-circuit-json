@@ -20,7 +20,14 @@ const circuitJson = convertAltiumToCircuitJson(source, {
 })
 
 test("STM32 Nucleo full ST-LINK schematic source and conversion", async () => {
-  const circuitJsonSvg = renderImportedSchematicToSvg(circuitJson)
+  // Use a larger preview frame for this sheet's off-page labels and title block.
+  // Sheet dimensions are in millimeters; component and wire positions stay intact.
+  const previewCircuitJson = circuitJson.map((element) =>
+    element.type === "schematic_sheet"
+      ? { ...element, sheet_width: 350, sheet_height: 250 }
+      : element,
+  )
+  const circuitJsonSvg = renderImportedSchematicToSvg(previewCircuitJson)
   const comparisonSvg = stackAltiumAndCircuitJsonSvgs({
     altiumSvg: serializeAltiumSheetToSvg(document, {
       documentName: filename,
