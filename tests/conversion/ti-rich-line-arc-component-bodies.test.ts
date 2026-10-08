@@ -89,7 +89,7 @@ test("preserves rich TI transformer, optocoupler, and MOSFET bodies", async () =
 
   expect(findComponent(lm5155, "U1").is_box_with_pins).toBe(true)
   expect(findComponent(lm251772, "U1").is_box_with_pins).toBe(true)
-}, 120_000)
+})
 
 async function convertReference(
   filename: string,
