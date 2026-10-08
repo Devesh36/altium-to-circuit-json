@@ -17,7 +17,6 @@ export function classifyComponent({
   if (
     prefix === "Y" ||
     lowerReference.includes("crystal") ||
-    lowerReference.includes("xtal") ||
     /(?:^|[_-])cry(?:\d|[_-]|$)/iu.test(libraryReference)
   ) {
     return "crystal"

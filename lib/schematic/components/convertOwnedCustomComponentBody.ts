@@ -25,7 +25,6 @@ export function convertOwnedCustomComponentBody(
   },
   context: ComponentConversionContext,
 ): AnyCircuitElement[] | undefined {
-  const designatorPrefix = identity.designator.charAt(0).toUpperCase()
   const bodyPrimitiveKinds = new Set(
     records.flatMap((record) => {
       if (record instanceof AltiumSchEllipseRecord) return ["ellipse"]
@@ -36,14 +35,6 @@ export function convertOwnedCustomComponentBody(
         return ["arc"]
       }
       if (record instanceof AltiumSchLineRecord) return ["line"]
-      // Crystal drawings can include a rectangular package outline.
-      if (
-        (designatorPrefix === "X" || designatorPrefix === "Y") &&
-        (record instanceof AltiumSchRectangleRecord ||
-          record instanceof AltiumSchRoundedRectangleRecord)
-      ) {
-        return ["rectangle"]
-      }
       if (
         record instanceof AltiumSchPolygonRecord ||
         record instanceof AltiumSchPolylineRecord
