@@ -69,7 +69,7 @@ const resistors = [
 ]
 
 for (const { name, resistance } of resistors) {
-  test.failing(`classifies ${name} as a resistor with its resistance`, () => {
+  test(`classifies ${name} as a resistor with its resistance`, () => {
     const component = circuitJson.find(
       (element) => element.type === "source_component" && element.name === name,
     )
@@ -86,7 +86,7 @@ for (const name of [
   "R1",
   "R2",
 ]) {
-  test.failing(`preserves ${name}'s Res3 zigzag and terminals`, () => {
+  test(`preserves ${name}'s Res3 zigzag and terminals`, () => {
     const sourceComponent = circuitJson.find(
       (element) => element.type === "source_component" && element.name === name,
     )
