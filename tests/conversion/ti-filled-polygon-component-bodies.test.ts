@@ -82,34 +82,46 @@ test("preserves filled-polygon potentiometers on LMG342X", async () => {
 })
 
 test.each([
-  ["filled polygon without enough supporting geometry", true, 2],
-  ["three unfilled polygon/polyline primitives", false, 3],
-] as const)("keeps a box for %s", (_description, isSolid, count) => {
-  const polygon =
-    "|RECORD=7|OwnerIndex=1|OwnerPartId=1|LocationCount=3|X1=45|Y1=50|X2=55|Y2=50|X3=50|Y3=60"
-  const polyline =
-    "|RECORD=6|OwnerIndex=1|OwnerPartId=1|LocationCount=2|X1=45|Y1=40|X2=55|Y2=40"
-  const records = [
-    "|RECORD=31",
-    "|RECORD=1|LibReference=CustomDevice|Designator=U1|PartCount=1|CurrentPartId=1|Location.X=50|Location.Y=50",
-    "|RECORD=2|OwnerIndex=1|OwnerPartId=1|Location.X=40|Location.Y=50|Name=IN|Designator=1|PinLength=10|Orientation=0",
-    "|RECORD=2|OwnerIndex=1|OwnerPartId=1|Location.X=60|Location.Y=50|Name=OUT|Designator=2|PinLength=10|Orientation=2",
-    `${polygon}|ISSOLID=${isSolid ? "T" : "F"}`,
-    ...Array.from({ length: count - 1 }, () => polyline),
-  ]
-  const elements = convertAltiumSchDocToCircuitJson(
-    parseAltiumSchDoc(records.join("\n")),
-    { centerOnSchematicSheet: false },
-  )
-  const component = elements.find(
-    (element) => element.type === "schematic_component",
-  )
-  expect(component?.is_box_with_pins).toBe(true)
-  expect(
-    elements.filter(
-      (element) =>
-        element.type === "schematic_path" &&
-        element.schematic_component_id === component?.schematic_component_id,
-    ),
-  ).toHaveLength(0)
-})
+  [
+    "filled polygon without enough supporting geometry",
+    true,
+    2,
+    "polyline",
+    true,
+  ],
+  ["three unfilled polygons", false, 3, "polygon", true],
+  ["unfilled polygon with supporting polylines", false, 3, "polyline", false],
+] as const)(
+  "checks custom-body evidence for %s",
+  (_description, isSolid, count, supportingKind, isBox) => {
+    const polygon =
+      "|RECORD=7|OwnerIndex=1|OwnerPartId=1|LocationCount=3|X1=45|Y1=50|X2=55|Y2=50|X3=50|Y3=60"
+    const polyline =
+      "|RECORD=6|OwnerIndex=1|OwnerPartId=1|LocationCount=2|X1=45|Y1=40|X2=55|Y2=40"
+    const records = [
+      "|RECORD=31",
+      "|RECORD=1|LibReference=CustomDevice|Designator=U1|PartCount=1|CurrentPartId=1|Location.X=50|Location.Y=50",
+      "|RECORD=2|OwnerIndex=1|OwnerPartId=1|Location.X=40|Location.Y=50|Name=IN|Designator=1|PinLength=10|Orientation=0",
+      "|RECORD=2|OwnerIndex=1|OwnerPartId=1|Location.X=60|Location.Y=50|Name=OUT|Designator=2|PinLength=10|Orientation=2",
+      `${polygon}|ISSOLID=${isSolid ? "T" : "F"}`,
+      ...Array.from({ length: count - 1 }, () =>
+        supportingKind === "polygon" ? `${polygon}|ISSOLID=F` : polyline,
+      ),
+    ]
+    const elements = convertAltiumSchDocToCircuitJson(
+      parseAltiumSchDoc(records.join("\n")),
+      { centerOnSchematicSheet: false },
+    )
+    const component = elements.find(
+      (element) => element.type === "schematic_component",
+    )
+    expect(component?.is_box_with_pins).toBe(isBox)
+    expect(
+      elements.filter(
+        (element) =>
+          element.type === "schematic_path" &&
+          element.schematic_component_id === component?.schematic_component_id,
+      ),
+    ).toHaveLength(isBox ? 0 : count)
+  },
+)
