@@ -28,14 +28,25 @@ test("STM32 Nucleo full ST-LINK schematic source and conversion", async () => {
       : element,
   )
   const circuitJsonSvg = renderImportedSchematicToSvg(previewCircuitJson)
+  // The source declares a 1000-unit sheet, but its drawing extends beyond it.
+  // Frame the source preview instead of changing the native document's geometry.
+  const sourceViewBox = { x: -45, y: -50, width: 1260, height: 900 }
+  const altiumSvg = serializeAltiumSheetToSvg(document, {
+    documentName: filename,
+    height: 600,
+    width: 800,
+    viewBox: sourceViewBox,
+    showBorder: false,
+    title: "altiumts source rendering (preview frame)",
+  })
+  const sourceFrame = `<g data-record="PreviewSheetBorder" fill="#fffef8" stroke="#334155" stroke-width="1"><rect x="20" y="20" width="${sourceViewBox.width - 40}" height="${sourceViewBox.height - 40}"/><rect x="30" y="30" width="${sourceViewBox.width - 60}" height="${sourceViewBox.height - 60}" fill="none"/></g>`
+  const framedAltiumSvg = altiumSvg.replace(
+    '<g data-sheet-content="true"',
+    `${sourceFrame}<g data-sheet-content="true"`,
+  )
+  expect(framedAltiumSvg).toContain('data-record="PreviewSheetBorder"')
   const comparisonSvg = stackAltiumAndCircuitJsonSvgs({
-    altiumSvg: serializeAltiumSheetToSvg(document, {
-      documentName: filename,
-      height: 600,
-      width: 800,
-      viewBox: { x: -25, y: -25, width: 1200, height: 850 },
-      title: "altiumts source rendering",
-    }),
+    altiumSvg: framedAltiumSvg,
     circuitJsonSvg,
     label: "STM32 Nucleo ST-LINK schematic",
   })
