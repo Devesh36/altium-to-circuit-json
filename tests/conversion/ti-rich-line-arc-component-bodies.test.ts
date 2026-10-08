@@ -11,6 +11,39 @@ type SchematicComponent = Extract<
 >
 type SourceComponent = Extract<AnyCircuitElement, { type: "source_component" }>
 
+test("preserves TI dual-diode and shunt-regulator polygon/polyline bodies", async () => {
+  const circuitJson = await convertReference(
+    TI_EVM_REFERENCE_FILENAMES.lm5155EvmFly.schematic,
+  )
+
+  for (const { name, pathCount, filledPathCount } of [
+    { name: "D4", pathCount: 6, filledPathCount: 2 },
+    { name: "U3", pathCount: 4, filledPathCount: 1 },
+  ]) {
+    const component = findComponent(circuitJson, name)
+    expect(component.is_box_with_pins).toBe(false)
+    expect(component.symbol_name).toBeUndefined()
+
+    const paths = ownedElements({
+      circuitJson,
+      component,
+      type: "schematic_path",
+    })
+    expect(paths).toHaveLength(pathCount)
+    expect(
+      paths.filter(
+        (element) =>
+          element.type === "schematic_path" && element.is_filled === true,
+      ),
+    ).toHaveLength(filledPathCount)
+    expect(
+      ownedElements({ circuitJson, component, type: "schematic_port" }),
+    ).toHaveLength(3)
+  }
+
+  expect(findComponent(circuitJson, "U1").is_box_with_pins).toBe(true)
+}, 120_000)
+
 test("preserves rich TI transformer, optocoupler, and MOSFET bodies", async () => {
   const lm5155 = await convertReference(
     TI_EVM_REFERENCE_FILENAMES.lm5155EvmFly.schematic,
@@ -56,7 +89,7 @@ test("preserves rich TI transformer, optocoupler, and MOSFET bodies", async () =
 
   expect(findComponent(lm5155, "U1").is_box_with_pins).toBe(true)
   expect(findComponent(lm251772, "U1").is_box_with_pins).toBe(true)
-})
+}, 120_000)
 
 async function convertReference(
   filename: string,

@@ -32,12 +32,8 @@ export function convertOwnedCustomComponentBody(
         return ["arc"]
       }
       if (record instanceof AltiumSchLineRecord) return ["line"]
-      if (
-        record instanceof AltiumSchPolygonRecord ||
-        record instanceof AltiumSchPolylineRecord
-      ) {
-        return ["polygon"]
-      }
+      if (record instanceof AltiumSchPolygonRecord) return ["polygon"]
+      if (record instanceof AltiumSchPolylineRecord) return ["polyline"]
       return []
     }),
   )
@@ -53,6 +49,8 @@ export function convertOwnedCustomComponentBody(
   // A lone line or shape can be a decoration on an otherwise rectangular IC.
   // Multiple primitive kinds are strong evidence that the primitives form the
   // component body itself, even when it does not use every supported family.
+  // Keep closed polygons distinct from open polylines: diode and regulator
+  // symbols can be drawn entirely with these two kinds.
   if (bodyPrimitiveCount < 3 || bodyPrimitiveKinds.size < 2) return undefined
 
   const ownedElements = convertOwnedComponentRecords(
