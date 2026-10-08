@@ -1,12 +1,13 @@
 import { type AltiumSchComponentRecord, AltiumSchPinRecord } from "altiumts"
 import type { SchematicComponent } from "circuit-json"
-import { getBoundsCenter, scaleLength, scalePoint } from "../geometry"
+import { getBoundsCenter, scalePoint } from "../geometry"
 import {
   applyNativeSymbolPortGeometry,
   selectCircuitJsonSymbol,
 } from "../symbols"
 import { addComponentFallbackText } from "./addComponentFallbackText"
 import { convertComponentPin } from "./convertComponentPin"
+import { convertMarkedCapacitorBody } from "./convertMarkedCapacitorBody"
 import { convertOwnedComponentBody } from "./convertOwnedComponentBody"
 import { convertOwnedSingleInputGateBody } from "./convertOwnedSingleInputGateBody"
 import { convertPinlessComponent } from "./convertPinlessComponent"
@@ -14,6 +15,7 @@ import { createComponentPinEdgeElements } from "./createComponentPinEdgeElements
 import { createSourceComponent } from "./createSourceComponent"
 import { getComponentBodyBounds } from "./getComponentBodyBounds"
 import { getComponentIdentity } from "./getComponentIdentity"
+import { getComponentSize } from "./getComponentSize"
 import { getVisibleSymbolLabels } from "./getVisibleSymbolLabels"
 import { isOwnedRecordVisible } from "./isOwnedRecordVisible"
 import { isPinHidden } from "./isPinHidden"
@@ -78,10 +80,15 @@ export function convertComponent(
     visibleOwnedRecords,
     componentPorts.map(({ point }) => point),
   )
-  const symbolSelection = selectCircuitJsonSymbol({
+  let symbolSelection = selectCircuitJsonSymbol({
     ...identity,
     ports: componentPorts,
   })
+  const polarizedCapacitorBody = convertMarkedCapacitorBody(
+    { identity, records: visibleOwnedRecords, symbolSelection },
+    context,
+  )
+  if (polarizedCapacitorBody) symbolSelection = undefined
   const singleInputGateBody = symbolSelection
     ? undefined
     : convertOwnedSingleInputGateBody(
@@ -89,6 +96,7 @@ export function convertComponent(
         context,
       )
   const ownedComponentBody =
+    polarizedCapacitorBody ??
     singleInputGateBody ??
     (symbolSelection
       ? undefined
@@ -97,18 +105,11 @@ export function convertComponent(
           context,
         ))
   const center = scalePoint(getBoundsCenter(bodyBounds), options.scale)
-  const size = symbolSelection
-    ? { ...symbolSelection.symbol.size }
-    : {
-        height: Math.max(
-          scaleLength(bodyBounds.maxY - bodyBounds.minY, options.scale),
-          0.4,
-        ),
-        width: Math.max(
-          scaleLength(bodyBounds.maxX - bodyBounds.minX, options.scale),
-          0.4,
-        ),
-      }
+  const size = getComponentSize({
+    bodyBounds,
+    scale: options.scale,
+    symbolSelection,
+  })
   if (symbolSelection) {
     applyNativeSymbolPortGeometry({ center, selection: symbolSelection })
   }
