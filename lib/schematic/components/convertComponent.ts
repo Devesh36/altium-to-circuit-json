@@ -1,4 +1,8 @@
-import { type AltiumSchComponentRecord, AltiumSchPinRecord } from "altiumts"
+import {
+  type AltiumSchComponentRecord,
+  AltiumSchPinRecord,
+  AltiumSchPolylineRecord,
+} from "altiumts"
 import type { SchematicComponent } from "circuit-json"
 import { getBoundsCenter, scalePoint } from "../geometry"
 import {
@@ -9,6 +13,7 @@ import { addComponentFallbackText } from "./addComponentFallbackText"
 import { convertComponentPin } from "./convertComponentPin"
 import { convertMarkedCapacitorBody } from "./convertMarkedCapacitorBody"
 import { convertOwnedComponentBody } from "./convertOwnedComponentBody"
+import { convertOwnedComponentRecords } from "./convertOwnedComponentRecords"
 import { convertOwnedSingleInputGateBody } from "./convertOwnedSingleInputGateBody"
 import { convertPinlessComponent } from "./convertPinlessComponent"
 import { createComponentPinEdgeElements } from "./createComponentPinEdgeElements"
@@ -19,6 +24,7 @@ import { getComponentSize } from "./getComponentSize"
 import { getVisibleSymbolLabels } from "./getVisibleSymbolLabels"
 import { isOwnedRecordVisible } from "./isOwnedRecordVisible"
 import { isPinHidden } from "./isPinHidden"
+import { prepareOwnedComponentBodyElements } from "./prepareOwnedComponentBodyElements"
 import type { ComponentConversionContext } from "./types"
 export function convertComponent(
   {
@@ -84,6 +90,27 @@ export function convertComponent(
     ...identity,
     ports: componentPorts,
   })
+  // Altium's Res3 resistor has a complete zigzag body made from a single
+  // polyline. Keep its drawing and terminal positions instead of a box.
+  const resistorBody =
+    symbolSelection?.name.startsWith("boxresistor_") &&
+    identity.libraryReference.toLowerCase() === "res3" &&
+    visibleOwnedRecords.some(
+      (record) =>
+        record instanceof AltiumSchPolylineRecord &&
+        (record.getNumber("LOCATIONCOUNT") ?? 0) > 2,
+    )
+      ? prepareOwnedComponentBodyElements(
+          convertOwnedComponentRecords(
+            {
+              ownedRecords: visibleOwnedRecords,
+              schematicComponentId: identity.schematicComponentId,
+            },
+            context,
+          ),
+        )
+      : undefined
+  if (resistorBody) symbolSelection = undefined
   const polarizedCapacitorBody = convertMarkedCapacitorBody(
     { identity, records: visibleOwnedRecords, symbolSelection },
     context,
@@ -96,6 +123,7 @@ export function convertComponent(
         context,
       )
   const ownedComponentBody =
+    resistorBody ??
     polarizedCapacitorBody ??
     singleInputGateBody ??
     (symbolSelection

@@ -31,7 +31,13 @@ export function classifyComponent({
     return "ferrite_bead"
   }
   if (prefix === "LED" || lowerReference.includes("led")) return "led"
-  if (prefix === "R" || lowerReference.includes("resistor")) return "resistor"
+  if (
+    prefix === "R" ||
+    lowerReference.includes("resistor") ||
+    lowerReference === "res3"
+  ) {
+    return "resistor"
+  }
   if (prefix === "C" || /(?:^|[_-])cap(?:[_-]|$)/iu.test(libraryReference)) {
     return "capacitor"
   }
