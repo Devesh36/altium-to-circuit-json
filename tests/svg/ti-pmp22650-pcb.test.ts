@@ -46,6 +46,16 @@ test(
     const sourceNets = circuitJson.filter(
       (element) => element.type === "source_net",
     )
+    expect(board).toMatchObject({
+      allow_blind_and_buried_vias: true,
+      is_via_in_pad_allowed: true,
+      min_via_hole_diameter: 0.1016,
+      min_via_pad_diameter: 0.2032,
+    })
+    expect(board.min_trace_width).toBeCloseTo(0.1524)
+    expect(sourceNets.every(({ trace_width }) => trace_width === 0.254)).toBe(
+      true,
+    )
     const routingConstraintsComparisonSvg =
       createRoutingConstraintsComparisonSvg({
         board,
