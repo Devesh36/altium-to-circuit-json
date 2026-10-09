@@ -1,11 +1,12 @@
 import { expect, test } from "bun:test"
 import { TI_POWER_REFERENCE_PCB_FILENAMES } from "../../scripts/references/reference-manifest"
 import { createOpenSourcePcbComparison } from "../helpers/create-open-source-pcb-comparison"
+import { createRoutingConstraintsComparisonSvg } from "../helpers/create-routing-constraints-comparison-svg"
 import { expectImportedPcbConnections } from "../helpers/expect-imported-pcb-connections"
 import { expectValidImportedPcb } from "../helpers/expect-valid-imported-pcb"
 
 test(
-  "TI PMP22650 PCB: altiumts SVG on the left, Circuit JSON SVG on the right",
+  "TI PMP22650 PCB: compare Altium, Circuit JSON, and routing constraints",
   async () => {
     const { circuitJson, circuitJsonSvg, comparisonSvg, document } =
       await createOpenSourcePcbComparison({
@@ -40,7 +41,21 @@ test(
         stroke_width: 0.0254,
       }),
     )
-    await expect(comparisonSvg).toMatchSvgSnapshot(import.meta.path)
+    const board = circuitJson.find((element) => element.type === "pcb_board")
+    if (!board) throw new Error("PMP22650 conversion did not emit a pcb_board")
+    const sourceNets = circuitJson.filter(
+      (element) => element.type === "source_net",
+    )
+    const routingConstraintsComparisonSvg =
+      createRoutingConstraintsComparisonSvg({
+        board,
+        boardComparisonSvg: comparisonSvg,
+        sourceNets,
+      })
+
+    await expect(routingConstraintsComparisonSvg).toMatchSvgSnapshot(
+      import.meta.path,
+    )
   },
   { timeout: 180_000 },
 )
