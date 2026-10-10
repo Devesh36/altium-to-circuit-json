@@ -7,6 +7,7 @@ import type { AnyCircuitElement } from "circuit-json"
 import type { SchematicContext } from "../document"
 import { scaleLength } from "../geometry"
 import { convertSchematicRecord } from "../rendering/convertSchematicRecord"
+import { normalizeComponentElementColors } from "./normalizeComponentElementColors"
 import type { ComponentConversionContext } from "./types"
 
 export function convertOwnedComponentRecords(
@@ -55,7 +56,7 @@ export function convertOwnedComponentRecords(
             }
           : element
       return {
-        ...preparedElement,
+        ...normalizeComponentElementColors(preparedElement),
         schematic_component_id: schematicComponentId,
       }
     })
